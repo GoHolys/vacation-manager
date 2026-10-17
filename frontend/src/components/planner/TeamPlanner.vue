@@ -4,6 +4,7 @@ import type { CalendarEntry, TeamCalendar } from '@/api/types';
 import {
   daysInclusive,
   daysOfMonth,
+  formatLongDate,
   formatRange,
   isWeekend,
   todayIso,
@@ -92,6 +93,16 @@ const coverageClass = (count: number) =>
 
 const dayNumber = (day: string) => Number(day.slice(8));
 
+/** Busiest days of the month, for the screen-reader summary of the coverage row. */
+const busiestDays = computed(() => {
+  const max = Math.max(0, ...awayPerDay.value);
+  if (max < 2) return null;
+  return {
+    count: max,
+    days: days.value.filter((_, index) => awayPerDay.value[index] === max).map(formatLongDate),
+  };
+});
+
 /** On narrow screens, bring today's column into view instead of always starting on the 1st. */
 const scroller = useTemplateRef<HTMLElement>('scroller');
 async function revealToday() {
@@ -100,7 +111,7 @@ async function revealToday() {
   const todayCell = container?.querySelector<HTMLElement>('[data-today]');
   if (!container || !todayCell) return;
   const nameColumnWidth =
-    container.querySelector<HTMLElement>('[role="columnheader"]')?.offsetWidth ?? 0;
+    container.querySelector<HTMLElement>('[data-name-column]')?.offsetWidth ?? 0;
   const cellOffset =
     todayCell.getBoundingClientRect().left -
     container.getBoundingClientRect().left +
@@ -117,22 +128,42 @@ watch(() => props.month, revealToday);
     ref="scroller"
     class="overflow-x-auto"
     tabindex="0"
-    aria-label="Team planner, scroll horizontally for more days"
+    role="region"
+    aria-label="Team planner grid, scroll horizontally for more days"
   >
-    <div class="min-w-max" role="table" :aria-label="`Team vacations`">
+    <!-- Screen readers get a structured summary; the visual wall chart is hidden from them. -->
+    <div class="sr-only">
+      <ul>
+        <li v-for="row in rows" :key="row.member.id">
+          {{ row.member.name }}{{ row.isMe ? ' (you)' : '' }}:
+          <template v-if="row.segments.length">
+            {{
+              row.segments
+                .map((segment) => segment.label.replace(`${row.member.name}: `, ''))
+                .join('; ')
+            }}
+          </template>
+          <template v-else>no time off this month</template>
+        </li>
+      </ul>
+      <p v-if="busiestDays">
+        Busiest {{ busiestDays.days.length === 1 ? 'day' : 'days' }}, with
+        {{ busiestDays.count }} people away: {{ busiestDays.days.join(', ') }}.
+      </p>
+    </div>
+
+    <div class="min-w-max" aria-hidden="true">
       <!-- Day header -->
-      <div class="grid border-b border-line" :style="gridStyle" role="row">
+      <div class="grid border-b border-line" :style="gridStyle">
         <div
+          data-name-column
           class="sticky left-0 z-20 bg-surface px-4 py-2 text-sm font-semibold text-ink-faint"
-          role="columnheader"
         >
           Teammate
         </div>
         <div
           v-for="day in days"
           :key="day"
-          role="columnheader"
-          :aria-label="day"
           :data-today="day === today || undefined"
           class="flex flex-col items-center py-1.5 text-xs"
           :class="isWeekend(day) ? 'bg-paper text-ink-faint' : 'text-ink-soft'"
@@ -153,12 +184,10 @@ watch(() => props.month, revealToday);
         :key="row.member.id"
         class="grid border-b border-line/70"
         :style="gridStyle"
-        role="row"
       >
         <div
           class="sticky left-0 z-20 flex items-center gap-2 truncate px-4 py-2.5 text-sm"
           :class="row.isMe ? 'bg-lagoon-50 font-semibold text-lagoon-800' : 'bg-surface text-ink'"
-          role="rowheader"
           style="grid-row: 1"
         >
           <span class="truncate">{{ row.member.name }}</span>
@@ -183,8 +212,6 @@ watch(() => props.month, revealToday);
         <div
           v-for="segment in row.segments"
           :key="segment.entry.id"
-          role="cell"
-          :aria-label="segment.label"
           :title="segment.label"
           class="z-10 mx-0.5 my-2 flex h-7 items-center overflow-hidden px-2 text-xs font-semibold"
           style="grid-row: 1"
@@ -204,20 +231,11 @@ watch(() => props.month, revealToday);
       </div>
 
       <!-- Coverage row -->
-      <div class="grid" :style="gridStyle" role="row">
-        <div
-          class="sticky left-0 z-20 bg-surface px-4 py-2 text-sm font-semibold text-ink-soft"
-          role="rowheader"
-        >
+      <div class="grid" :style="gridStyle">
+        <div class="sticky left-0 z-20 bg-surface px-4 py-2 text-sm font-semibold text-ink-soft">
           Away per day
         </div>
-        <div
-          v-for="(count, index) in awayPerDay"
-          :key="index"
-          class="p-0.5"
-          role="cell"
-          :aria-label="`${count} away`"
-        >
+        <div v-for="(count, index) in awayPerDay" :key="index" class="p-0.5">
           <div
             class="flex h-7 items-center justify-center rounded-md font-display text-sm font-semibold tabular-nums"
             :class="coverageClass(count)"

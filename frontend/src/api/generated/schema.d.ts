@@ -4,860 +4,860 @@
  */
 
 export interface paths {
-    "/api/v1/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Health check (API + database) */
-        get: operations["getHealth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  '/api/v1/health': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Exchange credentials for a JWT access token */
-        post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Health check (API + database) */
+    get: operations['getHealth'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/auth/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Current user profile */
-        get: operations["getCurrentUser"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /** Exchange credentials for a JWT access token */
+    post: operations['login'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/me/vacation-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List the caller's own vacation requests (paginated) */
-        get: operations["listMyVacationRequests"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Current user profile */
+    get: operations['getCurrentUser'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/vacation-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/me/vacation-requests/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Count the caller's requests per status */
-        get: operations["getMyVacationRequestStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List the caller's own vacation requests (paginated) */
+    get: operations['listMyVacationRequests'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/me/vacation-requests/stats': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/vacation-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List all vacation requests (validator dashboard) */
-        get: operations["listVacationRequests"];
-        put?: never;
-        /**
-         * Submit a vacation request
-         * @description Business rules: the end date must be after the start date, the start date cannot be in
-         *     the past, and the period cannot overlap another pending/approved request of the caller.
-         */
-        post: operations["createVacationRequest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Count the caller's requests per status */
+    get: operations['getMyVacationRequestStats'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/vacation-requests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/vacation-requests/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Count all requests per status */
-        get: operations["getVacationRequestStats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** List all vacation requests (validator dashboard) */
+    get: operations['listVacationRequests'];
+    put?: never;
+    /**
+     * Submit a vacation request
+     * @description Business rules: the end date must be after the start date, the start date cannot be in
+     *     the past, and the period cannot overlap another pending/approved request of the caller.
+     */
+    post: operations['createVacationRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/vacation-requests/stats': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/vacation-requests/:id": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get one vacation request
-         * @description Requesters can only read their own requests (others respond 404).
-         */
-        get: operations["getVacationRequest"];
-        /**
-         * Modify one of the caller's requests
-         * @description Approved requests cannot be modified. Editing a rejected request re-submits it (pending).
-         */
-        put: operations["updateVacationRequest"];
-        post?: never;
-        /** Cancel (delete) a pending or rejected request */
-        delete: operations["cancelVacationRequest"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Count all requests per status */
+    get: operations['getVacationRequestStats'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/vacation-requests/:id': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/vacation-requests/:id/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Approve a pending request */
-        post: operations["approveVacationRequest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Get one vacation request
+     * @description Requesters can only read their own requests (others respond 404).
+     */
+    get: operations['getVacationRequest'];
+    /**
+     * Modify one of the caller's requests
+     * @description Approved requests cannot be modified. Editing a rejected request re-submits it (pending).
+     */
+    put: operations['updateVacationRequest'];
+    post?: never;
+    /** Cancel (delete) a pending or rejected request */
+    delete: operations['cancelVacationRequest'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/vacation-requests/:id/approve': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/vacation-requests/:id/reject": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Reject a pending request (comment required) */
-        post: operations["rejectVacationRequest"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /** Approve a pending request */
+    post: operations['approveVacationRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/vacation-requests/:id/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/team-calendar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Team vacation planning (pending + approved) for a date window
-         * @description Available to both roles. Reasons and comments are never exposed. Max 93 days.
-         */
-        get: operations["getTeamCalendar"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /** Reject a pending request (comment required) */
+    post: operations['rejectVacationRequest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/team-calendar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List users (validator only — used by the dashboard filter) */
-        get: operations["listUsers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Team vacation planning (pending + approved) for a date window
+     * @description Available to both roles. Reasons and comments are never exposed. Max 93 days.
+     */
+    get: operations['getTeamCalendar'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/users': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** List users (validator only — used by the dashboard filter) */
+    get: operations['listUsers'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        ErrorDetail: {
-            /** @example endDate */
-            field?: string;
-            /** @enum {string} */
-            location?: "params" | "query" | "body";
-            message: string;
-        } & {
-            [key: string]: unknown;
-        };
-        ErrorResponse: {
-            error: {
-                /** @example VACATION_OVERLAP */
-                code: string;
-                message: string;
-                details?: components["schemas"]["ErrorDetail"][];
-                requestId: string;
-            };
-        };
-        HealthStatus: {
-            /** @enum {string} */
-            status: "ok" | "degraded";
-            /** @enum {string} */
-            database: "up" | "down";
-            uptimeSeconds: number;
-            /** Format: date-time */
-            timestamp: string;
-        };
-        /** @enum {string} */
-        UserRole: "requester" | "validator";
-        User: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: email */
-            email: string;
-            role: components["schemas"]["UserRole"];
-            /** Format: date-time */
-            createdAt: string;
-        };
-        UserList: {
-            data: components["schemas"]["User"][];
-        };
-        UserSummary: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: email */
-            email: string;
-        };
-        LoginRequest: {
-            /**
-             * Format: email
-             * @example requester@example.com
-             */
-            email: string;
-            /**
-             * Format: password
-             * @example Password123!
-             */
-            password: string;
-        };
-        AuthSession: {
-            accessToken: string;
-            /** @enum {string} */
-            tokenType: "Bearer";
-            /** @description Lifetime in seconds */
-            expiresIn: number;
-            /** Format: date-time */
-            expiresAt: string;
-            user: components["schemas"]["User"];
-        };
-        /** @enum {string} */
-        VacationRequestStatus: "pending" | "approved" | "rejected";
-        VacationRequest: {
-            /** Format: uuid */
-            id: string;
-            /** Format: date */
-            startDate: string;
-            /** Format: date */
-            endDate: string;
-            /** @description Calendar days covered (inclusive) */
-            days: number;
-            reason: string | null;
-            status: components["schemas"]["VacationRequestStatus"];
-            /** @description Validator comment (always present on rejected requests) */
-            comments: string | null;
-            requester: components["schemas"]["UserSummary"];
-            decidedBy: components["schemas"]["UserSummary"] | null;
-            /** Format: date-time */
-            decidedAt: string | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        VacationRequestInput: {
-            /**
-             * Format: date
-             * @example 2030-07-01
-             */
-            startDate: string;
-            /**
-             * Format: date
-             * @example 2030-07-10
-             */
-            endDate: string;
-            reason?: string | null;
-        };
-        DecisionRequest: {
-            comment?: string | null;
-        };
-        RejectionRequest: {
-            comment: string;
-        };
-        PageMeta: {
-            page: number;
-            pageSize: number;
-            totalItems: number;
-            totalPages: number;
-        };
-        VacationRequestPage: {
-            data: components["schemas"]["VacationRequest"][];
-            meta: components["schemas"]["PageMeta"];
-        };
-        VacationRequestStats: {
-            pending: number;
-            approved: number;
-            rejected: number;
-            total: number;
-        };
-        TeamMember: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-        };
-        CalendarEntry: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            userId: string;
-            /** Format: date */
-            startDate: string;
-            /** Format: date */
-            endDate: string;
-            /** @enum {string} */
-            status: "pending" | "approved";
-        };
-        TeamCalendar: {
-            /** Format: date */
-            from: string;
-            /** Format: date */
-            to: string;
-            members: components["schemas"]["TeamMember"][];
-            entries: components["schemas"]["CalendarEntry"][];
-        };
+  schemas: {
+    ErrorDetail: {
+      /** @example endDate */
+      field?: string;
+      /** @enum {string} */
+      location?: 'params' | 'query' | 'body';
+      message: string;
+    } & {
+      [key: string]: unknown;
     };
-    responses: {
-        /** @description Missing, invalid or expired token / invalid credentials */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description The caller's role (or ownership) does not allow this action */
-        Forbidden: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description Resource not found */
-        NotFound: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /**
-         * @description Conflicts with the current state — `VACATION_OVERLAP`, `REQUEST_NOT_MODIFIABLE`,
-         *     `REQUEST_ALREADY_DECIDED`.
-         */
-        Conflict: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /**
-         * @description Invalid input (`VALIDATION_ERROR`) or broken business rule (`END_DATE_NOT_AFTER_START_DATE`,
-         *     `START_DATE_IN_PAST`, `REJECTION_COMMENT_REQUIRED`).
-         */
-        ValidationFailed: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description Too many failed login attempts (`LOGIN_LOCKED`); see the Retry-After header */
-        TooManyRequests: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
+    ErrorResponse: {
+      error: {
+        /** @example VACATION_OVERLAP */
+        code: string;
+        message: string;
+        details?: components['schemas']['ErrorDetail'][];
+        requestId: string;
+      };
     };
-    parameters: {
-        Id: string;
-        StatusFilter: components["schemas"]["VacationRequestStatus"];
-        Page: number;
-        PageSize: number;
-        Sort: "createdAt" | "startDate";
-        Order: "asc" | "desc";
+    HealthStatus: {
+      /** @enum {string} */
+      status: 'ok' | 'degraded';
+      /** @enum {string} */
+      database: 'up' | 'down';
+      uptimeSeconds: number;
+      /** Format: date-time */
+      timestamp: string;
     };
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /** @enum {string} */
+    UserRole: 'requester' | 'validator';
+    User: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** Format: email */
+      email: string;
+      role: components['schemas']['UserRole'];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    UserList: {
+      data: components['schemas']['User'][];
+    };
+    UserSummary: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** Format: email */
+      email: string;
+    };
+    LoginRequest: {
+      /**
+       * Format: email
+       * @example requester@example.com
+       */
+      email: string;
+      /**
+       * Format: password
+       * @example Password123!
+       */
+      password: string;
+    };
+    AuthSession: {
+      accessToken: string;
+      /** @enum {string} */
+      tokenType: 'Bearer';
+      /** @description Lifetime in seconds */
+      expiresIn: number;
+      /** Format: date-time */
+      expiresAt: string;
+      user: components['schemas']['User'];
+    };
+    /** @enum {string} */
+    VacationRequestStatus: 'pending' | 'approved' | 'rejected';
+    VacationRequest: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      startDate: string;
+      /** Format: date */
+      endDate: string;
+      /** @description Calendar days covered (inclusive) */
+      days: number;
+      reason: string | null;
+      status: components['schemas']['VacationRequestStatus'];
+      /** @description Validator comment (always present on rejected requests) */
+      comments: string | null;
+      requester: components['schemas']['UserSummary'];
+      decidedBy: components['schemas']['UserSummary'] | null;
+      /** Format: date-time */
+      decidedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    VacationRequestInput: {
+      /**
+       * Format: date
+       * @example 2030-07-01
+       */
+      startDate: string;
+      /**
+       * Format: date
+       * @example 2030-07-10
+       */
+      endDate: string;
+      reason?: string | null;
+    };
+    DecisionRequest: {
+      comment?: string | null;
+    };
+    RejectionRequest: {
+      comment: string;
+    };
+    PageMeta: {
+      page: number;
+      pageSize: number;
+      totalItems: number;
+      totalPages: number;
+    };
+    VacationRequestPage: {
+      data: components['schemas']['VacationRequest'][];
+      meta: components['schemas']['PageMeta'];
+    };
+    VacationRequestStats: {
+      pending: number;
+      approved: number;
+      rejected: number;
+      total: number;
+    };
+    TeamMember: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+    };
+    CalendarEntry: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      userId: string;
+      /** Format: date */
+      startDate: string;
+      /** Format: date */
+      endDate: string;
+      /** @enum {string} */
+      status: 'pending' | 'approved';
+    };
+    TeamCalendar: {
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to: string;
+      members: components['schemas']['TeamMember'][];
+      entries: components['schemas']['CalendarEntry'][];
+    };
+  };
+  responses: {
+    /** @description Missing, invalid or expired token / invalid credentials */
+    Unauthorized: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /** @description The caller's role (or ownership) does not allow this action */
+    Forbidden: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /** @description Resource not found */
+    NotFound: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /**
+     * @description Conflicts with the current state — `VACATION_OVERLAP`, `REQUEST_NOT_MODIFIABLE`,
+     *     `REQUEST_ALREADY_DECIDED`.
+     */
+    Conflict: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /**
+     * @description Invalid input (`VALIDATION_ERROR`) or broken business rule (`END_DATE_NOT_AFTER_START_DATE`,
+     *     `START_DATE_IN_PAST`, `REJECTION_COMMENT_REQUIRED`).
+     */
+    ValidationFailed: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+    /** @description Too many failed login attempts (`LOGIN_LOCKED`); see the Retry-After header */
+    TooManyRequests: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['ErrorResponse'];
+      };
+    };
+  };
+  parameters: {
+    Id: string;
+    StatusFilter: components['schemas']['VacationRequestStatus'];
+    Page: number;
+    PageSize: number;
+    Sort: 'createdAt' | 'startDate';
+    Order: 'asc' | 'desc';
+  };
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getHealth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The API and its database are healthy */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthStatus"];
-                };
-            };
-            /** @description The database is unreachable */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthStatus"];
-                };
-            };
-        };
+  getHealth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description The API and its database are healthy */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
+        content: {
+          'application/json': components['schemas']['HealthStatus'];
         };
-        responses: {
-            /** @description Authenticated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthSession"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            422: components["responses"]["ValidationFailed"];
-            429: components["responses"]["TooManyRequests"];
+      };
+      /** @description The database is unreachable */
+      503: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          'application/json': components['schemas']['HealthStatus'];
+        };
+      };
     };
-    getCurrentUser: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The authenticated user */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["User"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-        };
+  };
+  login: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    listMyVacationRequests: {
-        parameters: {
-            query?: {
-                status?: components["parameters"]["StatusFilter"];
-                page?: components["parameters"]["Page"];
-                pageSize?: components["parameters"]["PageSize"];
-                sort?: components["parameters"]["Sort"];
-                order?: components["parameters"]["Order"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A page of vacation requests */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequestPage"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            422: components["responses"]["ValidationFailed"];
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LoginRequest'];
+      };
     };
-    getMyVacationRequestStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Authenticated */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Counts per status */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequestStats"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
+        content: {
+          'application/json': components['schemas']['AuthSession'];
         };
+      };
+      401: components['responses']['Unauthorized'];
+      422: components['responses']['ValidationFailed'];
+      429: components['responses']['TooManyRequests'];
     };
-    listVacationRequests: {
-        parameters: {
-            query?: {
-                status?: components["parameters"]["StatusFilter"];
-                /** @description Only requests of this user */
-                userId?: string;
-                page?: components["parameters"]["Page"];
-                pageSize?: components["parameters"]["PageSize"];
-                sort?: components["parameters"]["Sort"];
-                order?: components["parameters"]["Order"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A page of vacation requests */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequestPage"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            422: components["responses"]["ValidationFailed"];
-        };
+  };
+  getCurrentUser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    createVacationRequest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description The authenticated user */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VacationRequestInput"];
-            };
+        content: {
+          'application/json': components['schemas']['User'];
         };
-        responses: {
-            /** @description Created — the request is pending review */
-            201: {
-                headers: {
-                    /** @description URL of the new resource */
-                    Location?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequest"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            409: components["responses"]["Conflict"];
-            422: components["responses"]["ValidationFailed"];
-        };
+      };
+      401: components['responses']['Unauthorized'];
     };
-    getVacationRequestStats: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Counts per status */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequestStats"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-        };
+  };
+  listMyVacationRequests: {
+    parameters: {
+      query?: {
+        status?: components['parameters']['StatusFilter'];
+        page?: components['parameters']['Page'];
+        pageSize?: components['parameters']['PageSize'];
+        sort?: components['parameters']['Sort'];
+        order?: components['parameters']['Order'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    getVacationRequest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["Id"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description A page of vacation requests */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description The vacation request */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequest"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+        content: {
+          'application/json': components['schemas']['VacationRequestPage'];
         };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['ValidationFailed'];
     };
-    updateVacationRequest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["Id"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VacationRequestInput"];
-            };
-        };
-        responses: {
-            /** @description Updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequest"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["Conflict"];
-            422: components["responses"]["ValidationFailed"];
-        };
+  };
+  getMyVacationRequestStats: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    cancelVacationRequest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["Id"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Counts per status */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Cancelled */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["Conflict"];
+        content: {
+          'application/json': components['schemas']['VacationRequestStats'];
         };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
     };
-    approveVacationRequest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["Id"];
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["DecisionRequest"];
-            };
-        };
-        responses: {
-            /** @description Approved */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequest"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["Conflict"];
-        };
+  };
+  listVacationRequests: {
+    parameters: {
+      query?: {
+        status?: components['parameters']['StatusFilter'];
+        /** @description Only requests of this user */
+        userId?: string;
+        page?: components['parameters']['Page'];
+        pageSize?: components['parameters']['PageSize'];
+        sort?: components['parameters']['Sort'];
+        order?: components['parameters']['Order'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    rejectVacationRequest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["Id"];
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description A page of vacation requests */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RejectionRequest"];
-            };
+        content: {
+          'application/json': components['schemas']['VacationRequestPage'];
         };
-        responses: {
-            /** @description Rejected */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VacationRequest"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["Conflict"];
-            422: components["responses"]["ValidationFailed"];
-        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      422: components['responses']['ValidationFailed'];
     };
-    getTeamCalendar: {
-        parameters: {
-            query: {
-                from: string;
-                to: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Team members and their vacations in the window */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamCalendar"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            422: components["responses"]["ValidationFailed"];
-        };
+  };
+  createVacationRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    listUsers: {
-        parameters: {
-            query?: {
-                role?: components["schemas"]["UserRole"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Users sorted by name */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserList"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VacationRequestInput'];
+      };
     };
+    responses: {
+      /** @description Created — the request is pending review */
+      201: {
+        headers: {
+          /** @description URL of the new resource */
+          Location?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VacationRequest'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['ValidationFailed'];
+    };
+  };
+  getVacationRequestStats: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Counts per status */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VacationRequestStats'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+    };
+  };
+  getVacationRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: components['parameters']['Id'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The vacation request */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VacationRequest'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      404: components['responses']['NotFound'];
+    };
+  };
+  updateVacationRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: components['parameters']['Id'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VacationRequestInput'];
+      };
+    };
+    responses: {
+      /** @description Updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VacationRequest'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['ValidationFailed'];
+    };
+  };
+  cancelVacationRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: components['parameters']['Id'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Cancelled */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+    };
+  };
+  approveVacationRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: components['parameters']['Id'];
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['DecisionRequest'];
+      };
+    };
+    responses: {
+      /** @description Approved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VacationRequest'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+    };
+  };
+  rejectVacationRequest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: components['parameters']['Id'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RejectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Rejected */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VacationRequest'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+      404: components['responses']['NotFound'];
+      409: components['responses']['Conflict'];
+      422: components['responses']['ValidationFailed'];
+    };
+  };
+  getTeamCalendar: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Team members and their vacations in the window */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TeamCalendar'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      422: components['responses']['ValidationFailed'];
+    };
+  };
+  listUsers: {
+    parameters: {
+      query?: {
+        role?: components['schemas']['UserRole'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Users sorted by name */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserList'];
+        };
+      };
+      401: components['responses']['Unauthorized'];
+      403: components['responses']['Forbidden'];
+    };
+  };
 }

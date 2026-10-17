@@ -75,14 +75,14 @@ const preview = [
 <template>
   <div class="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
     <!-- Brand panel -->
-    <section
+    <aside
       class="relative hidden overflow-hidden bg-lagoon-800 p-12 text-white lg:flex lg:flex-col"
     >
       <AppLogo inverted />
       <div class="mt-auto max-w-lg">
-        <h1 class="font-display text-[2.75rem] leading-[1.05] font-bold text-white">
+        <p class="font-display text-[2.75rem] leading-[1.05] font-bold text-white">
           Time off, without the back-and-forth.
-        </h1>
+        </p>
         <p class="mt-4 text-lg text-lagoon-100">
           Request days away, get a clear answer, and see the whole team’s plans on one calendar.
         </p>
@@ -107,13 +107,13 @@ const preview = [
           <span class="size-2.5 rounded-full bg-sun" /> 2 people away today
         </div>
       </div>
-    </section>
+    </aside>
 
     <!-- Sign-in -->
-    <section class="flex items-center justify-center px-4 py-12 sm:px-8">
+    <main class="flex items-center justify-center px-4 py-12 sm:px-8">
       <div class="w-full max-w-sm">
         <AppLogo class="mb-10 lg:hidden" />
-        <h2 class="text-3xl font-bold">Sign in</h2>
+        <h1 class="text-3xl font-bold">Sign in</h1>
         <p class="mt-1.5 text-ink-soft">Use your work account to continue.</p>
 
         <form class="mt-8 space-y-4" novalidate @submit.prevent="signIn">
@@ -189,7 +189,7 @@ const preview = [
           </div>
         </div>
       </div>
-    </section>
+    </main>
   </div>
 </template>
 

@@ -27,3 +27,14 @@ setUnauthorizedHandler(() => {
 });
 
 app.mount('#app');
+
+if (auth.isAuthenticated) {
+  const roleBefore = auth.role;
+  auth
+    .refreshProfile()
+    .then(() => {
+      // Role changed while signed out of this tab: re-evaluate the current route's guards.
+      if (auth.role !== roleBefore) void router.replace({ name: auth.homeRouteName });
+    })
+    .catch(() => undefined); // offline / 401 are handled by the interceptor and the views
+}

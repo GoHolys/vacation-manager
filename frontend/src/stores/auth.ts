@@ -60,5 +60,25 @@ export const useAuthStore = defineStore('auth', () => {
     apply(null);
   }
 
-  return { session, user, role, isAuthenticated, homeRouteName, restore, login, logout };
+  /**
+   * Re-reads the profile after a reload: roles can change server-side while a token is still valid.
+   * A revoked session answers 401, which the HTTP interceptor turns into a sign-out.
+   */
+  async function refreshProfile(): Promise<void> {
+    if (!session.value) return;
+    const fresh = await authApi.me();
+    if (session.value) apply({ ...session.value, user: fresh });
+  }
+
+  return {
+    session,
+    user,
+    role,
+    isAuthenticated,
+    homeRouteName,
+    restore,
+    login,
+    logout,
+    refreshProfile,
+  };
 });

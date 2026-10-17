@@ -15,7 +15,7 @@
   --color-surface: #ffffff;
   --color-ink: #1b2433;
   --color-ink-soft: #4a5568;
-  --color-ink-faint: #64748b;
+  --color-ink-faint: #5f6b7f; /* ≥ 4.5:1 on paper, white, lagoon-50 and sun-soft (WCAG AA) */
   --color-line: #dde3ea;
   --color-line-strong: #c5cfda;
 

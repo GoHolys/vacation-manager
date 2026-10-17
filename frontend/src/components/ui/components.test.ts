@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import PaginationBar from './PaginationBar.vue';
+import FilterTabs from './FilterTabs.vue';
 import StatusBadge from './StatusBadge.vue';
 
 describe('StatusBadge', () => {
@@ -43,5 +44,36 @@ describe('PaginationBar', () => {
       props: { meta: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } },
     });
     expect(wrapper.find('nav').exists()).toBe(false);
+  });
+});
+
+describe('FilterTabs', () => {
+  const options = [
+    { value: 'all', label: 'All', count: 3 },
+    { value: 'pending', label: 'Pending', count: 1 },
+    { value: 'approved', label: 'Approved', count: 2 },
+  ];
+
+  it('exposes a single tab stop and moves selection with arrow keys, Home and End', async () => {
+    const wrapper = mount(FilterTabs, {
+      props: {
+        options,
+        label: 'Status',
+        modelValue: 'all',
+        'onUpdate:modelValue': (value: string) => wrapper.setProps({ modelValue: value }),
+      },
+      attachTo: document.body,
+    });
+    const radios = () => wrapper.findAll('[role="radio"]');
+    expect(radios().map((r) => r.attributes('tabindex'))).toEqual(['0', '-1', '-1']);
+
+    await radios()[0]!.trigger('keydown', { key: 'ArrowRight' });
+    expect(wrapper.props('modelValue')).toBe('pending');
+    await radios()[1]!.trigger('keydown', { key: 'End' });
+    expect(wrapper.props('modelValue')).toBe('approved');
+    await radios()[2]!.trigger('keydown', { key: 'ArrowRight' }); // wraps around
+    expect(wrapper.props('modelValue')).toBe('all');
+    expect(radios()[0]!.attributes('aria-checked')).toBe('true');
+    wrapper.unmount();
   });
 });

@@ -5,8 +5,8 @@ const auth = useAuthStore();
 </script>
 
 <template>
-  <div class="flex min-h-[60dvh] flex-col items-center justify-center px-4 text-center">
-    <p class="font-display text-7xl font-bold text-lagoon-200">404</p>
+  <main class="flex min-h-[60dvh] flex-col items-center justify-center px-4 text-center">
+    <p class="font-display text-7xl font-bold text-lagoon-600">404</p>
     <h1 class="mt-2 text-2xl font-bold">This page doesn’t exist</h1>
     <p class="mt-2 text-ink-soft">The link may be broken, or the page may have moved.</p>
     <RouterLink
@@ -15,5 +15,5 @@ const auth = useAuthStore();
     >
       {{ auth.isAuthenticated ? 'Go to your dashboard' : 'Go to sign in' }}
     </RouterLink>
-  </div>
+  </main>
 </template>

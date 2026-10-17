@@ -40,6 +40,12 @@ const refresh = () => Promise.all([list.run(), stats.run()]);
 
 onMounted(() => void stats.run());
 watch(filters, () => void list.run(), { immediate: true, deep: true });
+// A stale or hand-edited URL (?page=99) lands on the last existing page instead of an empty list.
+watch(list.data, (page) => {
+  if (page && page.meta.totalPages > 0 && page.meta.page > page.meta.totalPages) {
+    updateFilters({ page: page.meta.totalPages });
+  }
+});
 
 const tabs = computed(() => [
   { value: 'all' as const, label: 'All', count: stats.data.value?.total },
