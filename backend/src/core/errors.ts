@@ -74,6 +74,20 @@ export class BusinessRuleViolationError extends AppError {
   }
 }
 
+export class PayloadTooLargeError extends AppError {
+  readonly status = 413;
+  constructor(message = 'Payload too large') {
+    super('PAYLOAD_TOO_LARGE', message);
+  }
+}
+
+export class UnsupportedMediaTypeError extends AppError {
+  readonly status = 415;
+  constructor(message = 'Unsupported media type') {
+    super('UNSUPPORTED_MEDIA_TYPE', message);
+  }
+}
+
 export class TooManyRequestsError extends AppError {
   readonly status = 429;
   constructor(

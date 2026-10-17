@@ -5,7 +5,7 @@
   "description": "Vacation Manager REST API — Common Event Framework + CQRS + TypeORM/PostgreSQL",
   "main": "dist/index.js",
   "scripts": {
-    "codegen": "cef-gen-handlers",
+    "codegen": "node scripts/codegen.cjs",
     "predev": "npm run codegen",
     "dev": "tsx watch --clear-screen=false src/index.ts --local",
     "build": "npm run codegen && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
