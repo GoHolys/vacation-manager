@@ -4,12 +4,12 @@ A full-stack web application for managing vacation requests. **Requesters** subm
 off, **validators** review, approve or reject requests, and **both** plan around each other on a shared
 team calendar.
 
-| Stack    |                                                                                            |
-| -------- | ------------------------------------------------------------------------------------------ |
-| Frontend | Vue 3 (Composition API, `<script setup>`), Vue Router, Pinia, Axios, Tailwind CSS 4, Vite  |
-| Backend  | Node.js + TypeScript on the **Common Event Framework**, CQRS (commands / queries / events) |
-| Data     | PostgreSQL 16 + TypeORM (hand-written migrations, constraint-backed business rules)        |
-| Quality  | Vitest (124 tests incl. real-database e2e and race-condition tests), ESLint, Prettier, CI  |
+| Stack    |                                                                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend | Vue 3 (Composition API, `<script setup>`), Vue Router, Pinia, Axios, Tailwind CSS 4, Vite                                                               |
+| Backend  | Node.js + TypeScript on the **Common Event Framework**, CQRS (commands / queries / events)                                                              |
+| Data     | PostgreSQL 16 + TypeORM (hand-written migrations, constraint-backed business rules)                                                                     |
+| Quality  | 160 automated tests: Vitest unit + real-database e2e (incl. race conditions), Playwright browser flows, axe-core WCAG 2.1 AA gate; ESLint, Prettier, CI |
 
 ![Team planner](docs/screenshots/team-planner.png)
 
@@ -45,7 +45,7 @@ team calendar.
 
 ## Quick start
 
-**Prerequisites:** Node.js **22.12+** (npm 10+) and either **Docker** _or_ a local **PostgreSQL 13+**.
+**Prerequisites:** Node.js **24 LTS** (or 22.22.2+; npm 10+) and either **Docker** _or_ a local **PostgreSQL 13+**.
 
 ```bash
 # 1. Install all workspaces (backend + frontend)
@@ -92,7 +92,9 @@ _today_, so the data always looks current.
   sign-in (remembering the requested URL) and keep each role on its own pages.
 - **Role-based access control** with two roles — `requester` and `validator` — declared per route in
   the API contract (see [RBAC](#rbac-declared-in-the-contract)).
-- Brute-force protection: an account is locked for 15 minutes after 5 failed logins (`429` + `Retry-After`).
+- Brute-force protection: 5 failed logins within 15 minutes lock further attempts for 15 minutes
+  (`429` + `Retry-After`). Behind a trusted proxy (`TRUST_PROXY=true`) the lock is per account _and_
+  client IP, so a stranger cannot lock a colleague out.
 
 ### Requester interface (`/my-requests`)
 
@@ -212,18 +214,19 @@ Key design points:
 
 Run from the repository root:
 
-| Command                           | Description                                                                          |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run dev`                     | API (port 3000, hot reload) + web app (port 5173, proxied API)                       |
-| `npm run build`                   | Compile the API (`backend/dist`) and bundle the web app (`frontend/dist`)            |
-| `npm start`                       | Run the compiled API                                                                 |
-| `npm test`                        | Unit tests (backend + frontend) — no database needed                                 |
-| `npm run test:e2e`                | API end-to-end tests against PostgreSQL (`vacation_manager_test`, wiped on each run) |
-| `npm run lint`                    | ESLint (both workspaces)                                                             |
-| `npm run typecheck`               | `tsc` / `vue-tsc`                                                                    |
-| `npm run format`                  | Prettier                                                                             |
-| `npm run codegen`                 | Regenerate the CEF handler registry and the frontend API types from `root.yaml`      |
-| `npm run build:lambda -w backend` | Bundle a deployable AWS Lambda zip (`backend/dist/dist.zip`)                         |
+| Command                           | Description                                                                                     |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | API (port 3000, hot reload) + web app (port 5173, proxied API)                                  |
+| `npm run build`                   | Compile the API (`backend/dist`) and bundle the web app (`frontend/dist`)                       |
+| `npm start`                       | Preview the compiled API locally (production target: AWS Lambda, see `build:lambda`)            |
+| `npm test`                        | Unit tests (backend + frontend) — no database needed                                            |
+| `npm run test:e2e`                | API end-to-end tests against PostgreSQL (`vacation_manager_test`, wiped on each run)            |
+| `npm run test:browser`            | Browser flows + accessibility audit (Playwright). First time: `npm run install-browsers -w e2e` |
+| `npm run lint`                    | ESLint (both workspaces)                                                                        |
+| `npm run typecheck`               | `tsc` / `vue-tsc`                                                                               |
+| `npm run format`                  | Prettier                                                                                        |
+| `npm run codegen`                 | Regenerate the CEF handler registry and the frontend API types from `root.yaml`                 |
+| `npm run build:lambda -w backend` | Bundle a deployable AWS Lambda zip (`backend/dist/dist.zip`)                                    |
 
 ---
 
@@ -260,6 +263,7 @@ vacation-manager/
 │       ├── stores/              Pinia: auth session, toasts
 │       ├── router/              Routes + role guards
 │       └── views/               Login, My requests, Review, Team planner, 404
+├── e2e/                         Playwright browser flows + axe-core accessibility audit
 └── docker-compose.yml           PostgreSQL for local development
 ```
 
@@ -429,15 +433,17 @@ possible, mirrored in the UI for instant feedback, and covered by tests.
 
 ## Testing
 
-| Suite                                | Scope                                                                                                                                                                                                      | Count |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| Backend unit (`npm test -w backend`) | Domain rules, command handlers with in-memory ports, buses, JWT/authentication, input parsing, route security                                                                                              | 64    |
-| Backend e2e (`npm run test:e2e`)     | Real PostgreSQL + migrations, requests through the Lambda handler: auth, RBAC, every business rule, pagination & filters, team calendar, audit trail, race conditions, schema drift, API Gateway v2 events | 34    |
-| Frontend (`npm test -w frontend`)    | Date utilities, API error mapping, form validation, components, route guards, auth store                                                                                                                   | 26    |
+| Suite                                | Scope                                                                                                                                                                                                                                                                                     | Count |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| Backend unit (`npm test -w backend`) | Domain rules, command handlers with in-memory ports, buses, JWT/authentication, login throttling, configuration, input parsing, route security                                                                                                                                            | 72    |
+| Backend e2e (`npm run test:e2e`)     | Real PostgreSQL + migrations, requests through the Lambda handler: auth, RBAC, every business rule, pagination & filters, team calendar, audit trail, race conditions, schema drift, API Gateway v2 events                                                                                | 34    |
+| Frontend (`npm test -w frontend`)    | Date utilities, API error mapping, form validation, components (incl. keyboard behaviour), team planner, route guards, auth store                                                                                                                                                         | 30    |
+| Browser (`npm run test:browser`)     | Real Chromium against a real API + database, desktop and mobile: sign-in & role guards, full request life-cycle across both roles, URL-synced filters, team planner, and an **axe-core WCAG 2.1 AA audit of every screen and dialog**. Fails on any Vue runtime warning or uncaught error | 24    |
 
-The e2e suite refuses to run against a database whose name does not end in `_test`. CI
-(`.github/workflows/ci.yml`) runs formatting, lint, typecheck, all tests against a PostgreSQL service,
-and both production builds.
+Both database-backed suites refuse to run against a database whose name does not end in `_test`, and
+the browser suite starts its own API and web server on separate ports (3100 / 5174), so it never
+touches development data. CI (`.github/workflows/ci.yml`) runs formatting, lint, typecheck, all test
+suites against PostgreSQL services, and both production builds.
 
 ---
 
@@ -478,16 +484,18 @@ and both production builds.
 ## Security
 
 - JWT: HS256 only (`alg: none` / algorithm confusion rejected), issuer + audience + expiry verified,
-  secret length enforced at start-up.
+  secret length enforced at start-up, and the published placeholder secret is refused in production.
 - Passwords hashed with bcrypt and never selected by default. Login uses the same generic error and
-  constant-time comparison whether the e-mail exists or not, and is throttled per account.
+  timing whether the e-mail exists or not. Failed attempts are throttled in a fixed window with bounded
+  memory, per account + client IP behind a trusted proxy (`TRUST_PROXY`).
 - Input validated with zod (shape) and the domain (rules). Body size limited to 64 KB, JSON only.
   All SQL is parameterised.
 - Security headers on every response (`nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`,
   `Cache-Control: no-store`), explicit CORS origin, and a request id echoed for support.
 - Requesters can't read other people's requests (`404`, no existence leak). The team calendar never
   exposes reasons or comments. Logs redact passwords and tokens. Unexpected errors return a generic 500
-  while the details are logged.
+  while the details are logged. If the database is unreachable at start-up, requests get a retryable
+  `503`.
 - The frontend only follows same-app redirects after login (no open redirect) and signs out
   automatically when the token expires or the API returns `401`.
 
@@ -498,6 +506,10 @@ and both production builds.
 - **Token storage.** The access token lives in `localStorage` (simple, and works cross-origin), which
   is readable by injected scripts if an XSS bug ever existed. Hardening: `httpOnly` `SameSite` cookies
   with CSRF protection, short-lived access tokens plus refresh-token rotation, and server-side revocation.
+- **Account lock-out without a trusted proxy.** When the client IP isn't known (`TRUST_PROXY=false`),
+  failed logins are throttled per account, so someone who knows a colleague's e-mail can lock them out
+  for 15 minutes. Production deployments behind API Gateway/ALB should set `TRUST_PROXY=true`, plus
+  gateway-level rate limiting against distributed guessing.
 - **Single-instance assumptions.** The login throttle and the event bus are in-process. For horizontal
   scaling or Lambda, back the throttle with Redis/DynamoDB and publish events through a
   **transactional outbox** to SQS/SNS. Today an event can be lost if the process dies between commit
@@ -516,5 +528,6 @@ and both production builds.
   - The dev server doesn't URL-decode query strings (decoded in `http/request.ts`).
   - The framework's `Response` CORS defaults omit `PATCH`, so updates use `PUT` with the full resource.
   - The dev server binds to `localhost` only and prints a few debug lines per request.
-- **Not included:** dark mode, a full-stack Docker image (only PostgreSQL is containerised), and
-  browser-level e2e tests in CI (the UI flows were verified with Playwright during development).
+- **Not included:** dark mode, a full-stack Docker image (only PostgreSQL is containerised), and a
+  container-ready HTTP server: `npm start` reuses the framework's dev server (binds `localhost`), the
+  production target being AWS Lambda behind API Gateway.
