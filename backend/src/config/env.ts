@@ -39,7 +39,12 @@ const EnvSchema = z.object({
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().min(1).default(5),
   LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).default(15),
+  /** Set to true only behind a proxy you control (API Gateway, ALB, nginx) that sets X-Forwarded-For. */
+  TRUST_PROXY: z.stringbool().default(false),
 });
+
+/** Values that must never reach production (they are published in .env.example / the README). */
+const PLACEHOLDER_SECRET = /change-me|local-dev-secret|^(.)\1+$/i;
 
 export type EnvVariables = z.infer<typeof EnvSchema>;
 
@@ -49,6 +54,7 @@ export interface AppConfig {
   logLevel: EnvVariables['LOG_LEVEL'];
   corsOrigin: string;
   timeZone: string;
+  trustProxy: boolean;
   database: {
     host: string;
     port: number;
@@ -84,12 +90,18 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     );
   }
   const env = parsed.data;
+  if (env.NODE_ENV === 'production' && PLACEHOLDER_SECRET.test(env.JWT_SECRET)) {
+    throw new ConfigurationError([
+      'JWT_SECRET: a placeholder secret cannot be used in production — generate a random one',
+    ]);
+  }
   return {
     env: env.NODE_ENV,
     port: env.PORT,
     logLevel: env.LOG_LEVEL,
     corsOrigin: env.FRONT_END_URL,
     timeZone: env.APP_TIMEZONE,
+    trustProxy: env.TRUST_PROXY,
     database: {
       host: env.DB_HOST,
       port: env.DB_PORT,

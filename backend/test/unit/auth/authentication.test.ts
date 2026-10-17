@@ -37,7 +37,7 @@ describe('authentication', () => {
       users,
       hasher,
       tokens,
-      new InMemoryLoginAttemptLimiter(3, 15 * 60_000, clock),
+      new InMemoryLoginAttemptLimiter({ maxAttempts: 3, windowMs: 15 * 60_000 }, clock),
     );
   });
 
@@ -73,6 +73,20 @@ describe('authentication', () => {
 
     clock.set(new Date('2030-01-15T10:16:00Z'));
     await expect(login('jane@example.com', 'correct horse')).resolves.toHaveProperty('accessToken');
+  });
+
+  it('scopes the lock to the client when its IP is known (no lock-out by strangers)', async () => {
+    const attacker = (password: string) =>
+      handler.execute(new AuthenticateUserCommand('jane@example.com', password, '203.0.113.9'));
+    for (let i = 0; i < 3; i++) await attacker('nope').catch(() => undefined);
+
+    await expect(attacker('correct horse')).rejects.toMatchObject({ code: 'LOGIN_LOCKED' });
+    // The real owner, from another address, is unaffected.
+    await expect(
+      handler.execute(
+        new AuthenticateUserCommand('jane@example.com', 'correct horse', '198.51.100.7'),
+      ),
+    ).resolves.toHaveProperty('accessToken');
   });
 
   describe('Authenticator', () => {

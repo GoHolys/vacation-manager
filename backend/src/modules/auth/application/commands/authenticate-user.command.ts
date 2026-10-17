@@ -17,6 +17,8 @@ export class AuthenticateUserCommand extends Command<AuthenticationResultDto> {
   constructor(
     readonly email: string,
     readonly password: string,
+    /** Caller's IP when known (trusted proxy) — scopes brute-force throttling per client. */
+    readonly clientIp?: string,
   ) {
     super();
   }
@@ -25,34 +27,41 @@ export class AuthenticateUserCommand extends Command<AuthenticationResultDto> {
 export class AuthenticateUserHandler implements CommandHandler<AuthenticateUserCommand> {
   /**
    * Hash compared against when the e-mail is unknown, so the response time does not reveal
-   * whether an account exists (user-enumeration protection). Computed once, lazily.
+   * whether an account exists (user-enumeration protection). Computed eagerly at start-up so
+   * even the very first unknown-e-mail login takes the same time as a real one.
    */
-  private dummyHash?: Promise<string>;
+  private readonly dummyHash: Promise<string>;
 
   constructor(
     private readonly users: UserRepository,
     private readonly hasher: PasswordHasher,
     private readonly tokens: TokenService,
     private readonly limiter: LoginAttemptLimiter,
-  ) {}
+  ) {
+    this.dummyHash = hasher.hash('timing-safe-dummy-password');
+    this.dummyHash.catch(() => undefined); // surfaced (re-thrown) when awaited during a login
+  }
 
   async execute(command: AuthenticateUserCommand): Promise<AuthenticationResultDto> {
     const email = User.normalizeEmail(command.email);
-    this.limiter.assertAllowed(email);
+    // Per account *and* client when the client is known: a stranger hammering an e-mail address
+    // cannot lock its owner out from their own machine. Without a trusted client IP, per account.
+    const throttleKey = command.clientIp ? `${email}|${command.clientIp}` : email;
+    this.limiter.assertAllowed(throttleKey);
 
     const user = await this.users.findByEmailWithPassword(email);
     const passwordMatches = await this.hasher.verify(
       command.password,
-      user?.password ?? (await this.getDummyHash()),
+      user?.password ?? (await this.dummyHash),
     );
 
     if (!user || !passwordMatches) {
-      this.limiter.recordFailure(email);
+      this.limiter.recordFailure(throttleKey);
       // Same message for unknown e-mail and wrong password.
       throw new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-    this.limiter.reset(email);
+    this.limiter.reset(throttleKey);
     const issued = this.tokens.issue({
       sub: user.id,
       role: user.role,
@@ -67,10 +76,5 @@ export class AuthenticateUserHandler implements CommandHandler<AuthenticateUserC
       expiresAt: issued.expiresAt.toISOString(),
       user: toUserDto(user),
     };
-  }
-
-  private getDummyHash(): Promise<string> {
-    this.dummyHash ??= this.hasher.hash('timing-safe-dummy-password');
-    return this.dummyHash;
   }
 }

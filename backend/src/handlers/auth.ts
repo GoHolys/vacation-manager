@@ -8,8 +8,10 @@ import { loginBody } from './schemas';
 /** POST /api/v1/auth/login */
 export const parseLogin = defineInputParser({ body: loginBody });
 
-export const login = defineRouteHandler(parseLogin, async ({ body }, { app }) =>
-  ok(await app.commandBus.execute(new AuthenticateUserCommand(body.email, body.password))),
+export const login = defineRouteHandler(parseLogin, async ({ body }, { app, clientIp }) =>
+  ok(
+    await app.commandBus.execute(new AuthenticateUserCommand(body.email, body.password, clientIp)),
+  ),
 );
 
 /** GET /api/v1/auth/me */

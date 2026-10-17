@@ -7,7 +7,13 @@ import {
 } from 'commoneventframework';
 import type { CommonEvent } from 'commoneventframework/dist/types/commonEvent';
 import type { Application } from '../bootstrap/application';
-import { AppError, ForbiddenError, NotFoundError, TooManyRequestsError } from '../core/errors';
+import {
+  AppError,
+  ForbiddenError,
+  NotFoundError,
+  ServiceUnavailableError,
+  TooManyRequestsError,
+} from '../core/errors';
 import { HttpResult } from './http-result';
 import { getHeader } from './request';
 import { createHandlerContext, type RouteHandlerFn } from './route-handler';
@@ -43,7 +49,13 @@ export function createHttpKernel({ routeSecurity, getApplication }: HttpKernelOp
     let response: HttpResponse;
 
     try {
-      app = await getApplication();
+      try {
+        app = await getApplication();
+      } catch (error) {
+        // Configuration or database problem at start-up: report it, answer 503 (retryable).
+        console.error('[http] application start-up failed', error);
+        throw new ServiceUnavailableError();
+      }
       const headers = baseHeaders(app.config.corsOrigin, requestId);
 
       if (event.method === 'OPTIONS') {
@@ -86,7 +98,12 @@ export function createHttpKernel({ routeSecurity, getApplication }: HttpKernelOp
         response = input;
       } else {
         // 4. Handler.
-        const result = await handler(input, event, createHandlerContext(app, requestId, principal));
+        const clientIp = app.config.trustProxy ? clientIpFrom(event) : undefined;
+        const result = await handler(
+          input,
+          event,
+          createHandlerContext(app, requestId, principal, clientIp),
+        );
         response = toHttpResponse(result, headers);
       }
     } catch (error) {
@@ -102,6 +119,12 @@ export function createHttpKernel({ routeSecurity, getApplication }: HttpKernelOp
     }
     return response;
   };
+}
+
+/** First (client-supplied by the trusted proxy) address of X-Forwarded-For. */
+function clientIpFrom(event: CommonEvent): string | undefined {
+  const forwarded = getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim();
+  return forwarded && /^[0-9a-f.:]{3,45}$/i.test(forwarded) ? forwarded : undefined;
 }
 
 function baseHeaders(corsOrigin: string, requestId: string): Record<string, string> {

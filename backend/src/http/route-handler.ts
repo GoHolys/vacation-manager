@@ -10,6 +10,8 @@ export interface HandlerContext {
   app: Application;
   /** The authenticated caller, or `undefined` on public routes. */
   principal: Principal | undefined;
+  /** Client IP — only set when TRUST_PROXY is enabled (taken from X-Forwarded-For). */
+  clientIp: string | undefined;
   /** The authenticated caller — throws on public routes. */
   user(): Principal;
 }
@@ -47,11 +49,13 @@ export function createHandlerContext(
   app: Application,
   requestId: string,
   principal: Principal | undefined,
+  clientIp?: string,
 ): HandlerContext {
   return {
     app,
     requestId,
     principal,
+    clientIp,
     user() {
       if (!principal) throw new UnauthorizedError();
       return principal;

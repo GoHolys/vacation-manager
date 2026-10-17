@@ -88,6 +88,13 @@ export class UnsupportedMediaTypeError extends AppError {
   }
 }
 
+export class ServiceUnavailableError extends AppError {
+  readonly status = 503;
+  constructor(message = 'The service is temporarily unavailable. Please try again shortly.') {
+    super('SERVICE_UNAVAILABLE', message);
+  }
+}
+
 export class TooManyRequestsError extends AppError {
   readonly status = 429;
   constructor(

@@ -117,8 +117,10 @@ export async function createApplication(
     audience: config.auth.jwtAudience,
   });
   const loginLimiter = new InMemoryLoginAttemptLimiter(
-    config.auth.loginMaxAttempts,
-    config.auth.loginLockoutMinutes * 60_000,
+    {
+      maxAttempts: config.auth.loginMaxAttempts,
+      windowMs: config.auth.loginLockoutMinutes * 60_000,
+    },
     clock,
   );
 
