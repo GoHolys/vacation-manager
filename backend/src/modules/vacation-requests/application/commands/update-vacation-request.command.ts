@@ -1,7 +1,6 @@
 import { Command, type CommandHandler } from '../../../../core/cqrs/command-bus';
 import { VacationPeriod } from '../../domain/vacation-period';
 import { VacationRequestErrors } from '../../domain/vacation-request.errors';
-import { VacationRequestUpdatedEvent } from '../events/vacation-request.events';
 import { assertNoOverlap } from '../policies/overlap.policy';
 import type { VacationRequestCommandDependencies } from './dependencies';
 
@@ -40,12 +39,14 @@ export class UpdateVacationRequestHandler implements CommandHandler<UpdateVacati
         );
         await assertNoOverlap(vacationRequests, request.userId, period, request.id);
 
-        const { resubmitted } = request.reschedule(period, command.reason);
-        return { request: await vacationRequests.save(request), resubmitted };
+        // The aggregate records VacationRequestUpdatedEvent.
+        const { resubmitted } = request.reschedule(period, command.reason, this.deps.clock.now());
+        await vacationRequests.save(request);
+        return { request, resubmitted };
       },
     );
 
-    await this.deps.events.publish(VacationRequestUpdatedEvent.from(request, resubmitted));
+    await this.deps.events.publish(...request.pullEvents());
     return { id: request.id, resubmitted };
   }
 }

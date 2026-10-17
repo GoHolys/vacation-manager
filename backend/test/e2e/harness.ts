@@ -12,7 +12,7 @@ import { loadConfig } from '../../src/config/env';
 // The real Lambda entry point; it resolves the application lazily (see setApplication below).
 import { handler } from '../../src/index';
 import { FixedClock } from '../../src/core/clock';
-import { User } from '../../src/modules/users/domain/user.entity';
+import { UserRecord as User } from '../../src/modules/users/infrastructure/user.record';
 import { UserRole } from '../../src/modules/users/domain/user-role';
 
 /**

@@ -7,7 +7,7 @@ import type {
   VacationRequestRejectedEvent,
   VacationRequestSubmittedEvent,
   VacationRequestUpdatedEvent,
-} from '../events/vacation-request.events';
+} from '../../domain/vacation-request.events';
 
 const formatPeriod = (start: string, end: string) => `${start} → ${end}`;
 

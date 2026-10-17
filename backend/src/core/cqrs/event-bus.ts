@@ -1,22 +1,8 @@
-import { randomUUID } from 'node:crypto';
+import type { DomainEvent } from '../domain-event';
 import type { Logger } from '../logger';
 import type { MessageType } from './command-bus';
 
-/**
- * A domain event states a fact that already happened (VacationRequestApproved…).
- * Events are immutable, carry a unique id + timestamp, and are published only *after*
- * the transaction that produced them has committed.
- */
-export abstract class DomainEvent<TPayload extends object = object> {
-  abstract readonly eventName: string;
-  readonly eventId: string = randomUUID();
-  readonly occurredAt: Date = new Date();
-
-  constructor(
-    readonly aggregateId: string,
-    readonly payload: Readonly<TPayload>,
-  ) {}
-}
+export { DomainEvent } from '../domain-event';
 
 export interface EventHandler<E extends DomainEvent> {
   /** Human-readable name used in logs when the handler fails. */

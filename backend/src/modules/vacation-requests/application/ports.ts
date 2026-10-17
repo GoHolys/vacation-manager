@@ -1,9 +1,8 @@
 import type { IsoDate } from '../../../core/iso-date';
 import type { PageRequest } from '../../../core/pagination';
 import type { UserRepository } from '../../users/application/user.repository';
-import type { User } from '../../users/domain/user.entity';
 import type { VacationPeriod } from '../domain/vacation-period';
-import type { VacationRequest } from '../domain/vacation-request.entity';
+import type { VacationRequest } from '../domain/vacation-request';
 import type { VacationRequestStatus } from '../domain/vacation-request-status';
 
 // ─── Write side ───────────────────────────────────────────────────────────────
@@ -17,7 +16,10 @@ export interface VacationRequestRepository {
     period: VacationPeriod,
     excludeRequestId?: string,
   ): Promise<VacationRequest[]>;
-  save(request: VacationRequest): Promise<VacationRequest>;
+  /** Persists a newly submitted request. */
+  add(request: VacationRequest): Promise<void>;
+  /** Persists the current state of an existing request. */
+  save(request: VacationRequest): Promise<void>;
   remove(request: VacationRequest): Promise<void>;
 }
 
@@ -28,6 +30,7 @@ export interface VacationRequestsScope {
 }
 
 // ─── Read side ────────────────────────────────────────────────────────────────
+// Queries never load aggregates: the read model returns flat views shaped for the screens.
 
 export type VacationRequestSortField = 'createdAt' | 'startDate';
 export type SortOrder = 'asc' | 'desc';
@@ -39,8 +42,36 @@ export interface VacationRequestListCriteria {
   order: SortOrder;
 }
 
-/** A vacation request with its `user` and `decidedBy` relations loaded. */
-export type VacationRequestView = VacationRequest & { user: User; decidedBy: User | null };
+export interface UserSummaryView {
+  id: string;
+  name: string;
+  email: string;
+}
+
+/** A vacation request joined with its requester and deciding validator. */
+export interface VacationRequestView {
+  id: string;
+  userId: string;
+  startDate: IsoDate;
+  endDate: IsoDate;
+  reason: string | null;
+  status: VacationRequestStatus;
+  comments: string | null;
+  decidedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  user: UserSummaryView;
+  decidedBy: UserSummaryView | null;
+}
+
+/** What the team calendar may show: when someone is away, never why. */
+export interface CalendarEntryView {
+  id: string;
+  userId: string;
+  startDate: IsoDate;
+  endDate: IsoDate;
+  status: VacationRequestStatus;
+}
 
 export type StatusCounts = Record<VacationRequestStatus, number>;
 
@@ -52,5 +83,5 @@ export interface VacationRequestReadModel {
   ): Promise<{ items: VacationRequestView[]; total: number }>;
   countByStatus(userId?: string): Promise<StatusCounts>;
   /** Pending + approved requests intersecting the inclusive [from, to] window. */
-  findBlockingInRange(from: IsoDate, to: IsoDate): Promise<VacationRequest[]>;
+  findBlockingInRange(from: IsoDate, to: IsoDate): Promise<CalendarEntryView[]>;
 }

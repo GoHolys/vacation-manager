@@ -1,29 +1,42 @@
 import { randomUUID } from 'node:crypto';
 import type { DomainEvent, EventPublisher } from '../../src/core/cqrs/event-bus';
 import type { UnitOfWork } from '../../src/core/unit-of-work';
-import type { UserRepository } from '../../src/modules/users/application/user.repository';
-import { User } from '../../src/modules/users/domain/user.entity';
+import type {
+  UserCredentials,
+  UserRepository,
+} from '../../src/modules/users/application/user.repository';
+import { User, type UserProps } from '../../src/modules/users/domain/user';
 import { UserRole } from '../../src/modules/users/domain/user-role';
 import type {
   VacationRequestRepository,
   VacationRequestsScope,
 } from '../../src/modules/vacation-requests/application/ports';
 import type { VacationPeriod } from '../../src/modules/vacation-requests/domain/vacation-period';
-import { VacationRequest } from '../../src/modules/vacation-requests/domain/vacation-request.entity';
+import {
+  VacationRequest,
+  type VacationRequestProps,
+} from '../../src/modules/vacation-requests/domain/vacation-request';
 import { BLOCKING_STATUSES } from '../../src/modules/vacation-requests/domain/vacation-request-status';
 
 /** In-memory test doubles implementing the application ports — no database needed. */
 
-export function makeUser(role: UserRole, overrides: Partial<User> = {}): User {
-  return Object.assign(new User(), {
+const passwordHashes = new WeakMap<User, string>();
+
+export function makeUser(
+  role: UserRole,
+  overrides: Partial<UserProps> & { password?: string } = {},
+): User {
+  const { password, ...props } = overrides;
+  const user = User.restore({
     id: randomUUID(),
     name: role === UserRole.VALIDATOR ? 'Val Idator' : 'Rick Quester',
     email: `${randomUUID()}@example.com`,
-    password: 'hash',
     role,
     createdAt: new Date('2030-01-01T00:00:00Z'),
-    ...overrides,
+    ...props,
   });
+  passwordHashes.set(user, password ?? 'hash');
+  return user;
 }
 
 export class InMemoryUserRepository implements UserRepository {
@@ -33,8 +46,9 @@ export class InMemoryUserRepository implements UserRepository {
     return this.users.find((user) => user.id === id) ?? null;
   }
 
-  async findByEmailWithPassword(email: string) {
-    return this.users.find((user) => user.email === User.normalizeEmail(email)) ?? null;
+  async findCredentialsByEmail(email: string): Promise<UserCredentials | null> {
+    const user = this.users.find((candidate) => candidate.email === User.normalizeEmail(email));
+    return user ? { user, passwordHash: passwordHashes.get(user) ?? 'hash' } : null;
   }
 
   async list(filter: { role?: UserRole } = {}) {
@@ -59,21 +73,26 @@ export class InMemoryVacationRequestRepository implements VacationRequestReposit
     );
   }
 
-  async save(request: VacationRequest) {
-    request.id ??= randomUUID();
-    request.createdAt ??= new Date();
-    request.updatedAt = new Date();
+  async add(request: VacationRequest) {
+    if (this.items.has(request.id)) throw new Error(`Duplicate id ${request.id}`);
     this.items.set(request.id, request);
-    return request;
+  }
+
+  async save(request: VacationRequest) {
+    if (!this.items.has(request.id)) throw new Error(`Unknown id ${request.id}`);
+    this.items.set(request.id, request);
   }
 
   async remove(request: VacationRequest) {
     this.items.delete(request.id);
   }
 
-  /** Seeds a request in an arbitrary state (bypassing the creation rules). */
-  add(props: Partial<VacationRequest> & Pick<VacationRequest, 'userId' | 'startDate' | 'endDate'>) {
-    const request = Object.assign(new VacationRequest(), {
+  /** Stores a request in an arbitrary state (bypassing the creation rules and events). */
+  seed(
+    props: Partial<VacationRequestProps> &
+      Pick<VacationRequestProps, 'userId' | 'startDate' | 'endDate'>,
+  ): VacationRequest {
+    const request = VacationRequest.restore({
       id: randomUUID(),
       reason: null,
       status: 'pending',

@@ -22,6 +22,9 @@ export const VacationRequestErrors = {
   invalidDate: (field: 'startDate' | 'endDate', value: string) =>
     new ValidationError([{ field, message: `"${value}" is not a valid date (YYYY-MM-DD)` }]),
 
+  textTooLong: (field: 'reason' | 'comment', maxLength: number) =>
+    new ValidationError([{ field, message: `Must be at most ${maxLength} characters` }]),
+
   /** Business rule #1 */
   endDateNotAfterStartDate: () =>
     new BusinessRuleViolationError(

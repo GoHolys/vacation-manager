@@ -46,12 +46,6 @@ import {
   UpdateVacationRequestHandler,
 } from '../modules/vacation-requests/application/commands/update-vacation-request.command';
 import {
-  VacationRequestApprovedEvent,
-  VacationRequestRejectedEvent,
-  VacationRequestSubmittedEvent,
-  VacationRequestUpdatedEvent,
-} from '../modules/vacation-requests/application/events/vacation-request.events';
-import {
   GetTeamCalendarHandler,
   GetTeamCalendarQuery,
 } from '../modules/vacation-requests/application/queries/get-team-calendar.query';
@@ -71,6 +65,12 @@ import {
   NotifyRequesterOfDecision,
   NotifyValidatorsOfPendingRequest,
 } from '../modules/vacation-requests/application/subscribers/notification.subscribers';
+import {
+  VacationRequestApprovedEvent,
+  VacationRequestRejectedEvent,
+  VacationRequestSubmittedEvent,
+  VacationRequestUpdatedEvent,
+} from '../modules/vacation-requests/domain/vacation-request.events';
 import { TypeOrmVacationRequestReadModel } from '../modules/vacation-requests/infrastructure/typeorm-vacation-request.read-model';
 
 export interface Application {
@@ -150,6 +150,7 @@ export async function createApplication(
         new BcryptPasswordHasher(config.auth.bcryptRounds),
         tokens,
         loginLimiter,
+        eventBus,
       ),
     )
     .register(CreateVacationRequestCommand, new CreateVacationRequestHandler(commandDeps))

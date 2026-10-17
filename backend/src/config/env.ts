@@ -16,6 +16,8 @@ const isValidTimeZone = (timeZone: string): boolean => {
  */
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /** Interface the HTTP server binds to; use 0.0.0.0 inside a container. */
+  HOST: z.string().min(1).default('localhost'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   FRONT_END_URL: z.url().default('http://localhost:5173'),
@@ -50,6 +52,7 @@ export type EnvVariables = z.infer<typeof EnvSchema>;
 
 export interface AppConfig {
   env: EnvVariables['NODE_ENV'];
+  host: string;
   port: number;
   logLevel: EnvVariables['LOG_LEVEL'];
   corsOrigin: string;
@@ -97,6 +100,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   }
   return {
     env: env.NODE_ENV,
+    host: env.HOST,
     port: env.PORT,
     logLevel: env.LOG_LEVEL,
     corsOrigin: env.FRONT_END_URL,

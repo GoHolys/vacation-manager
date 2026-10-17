@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FixedClock } from '../../../src/core/clock';
 import { asIsoDate } from '../../../src/core/iso-date';
-import type { User } from '../../../src/modules/users/domain/user.entity';
+import type { User } from '../../../src/modules/users/domain/user';
 import { UserRole } from '../../../src/modules/users/domain/user-role';
 import {
   ApproveVacationRequestCommand,
@@ -73,7 +73,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('rule #2 — refuses overlapping pending/approved requests of the same user', async () => {
-      requests.add({ userId: requester.id, startDate: d('2030-02-01'), endDate: d('2030-02-05') });
+      requests.seed({ userId: requester.id, startDate: d('2030-02-01'), endDate: d('2030-02-05') });
 
       await expect(create(requester.id, '2030-02-05', '2030-02-10')).rejects.toMatchObject({
         code: 'VACATION_OVERLAP',
@@ -83,14 +83,14 @@ describe('vacation request command handlers', () => {
     });
 
     it('allows overlapping a rejected request or another user’s request', async () => {
-      requests.add({
+      requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
         status: 'rejected',
         comments: 'no',
       });
-      requests.add({
+      requests.seed({
         userId: otherRequester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -123,7 +123,7 @@ describe('vacation request command handlers', () => {
       );
 
     it('reschedules a pending request', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -141,7 +141,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('does not count the request itself as an overlap', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -152,7 +152,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('rule #3 — refuses to modify an approved request', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -166,7 +166,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('re-submits a rejected request', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -182,7 +182,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('refuses to modify someone else’s request', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: otherRequester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -203,7 +203,7 @@ describe('vacation request command handlers', () => {
       );
 
     it('deletes a pending request and publishes VacationRequestCancelled', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -215,7 +215,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('refuses to cancel an approved request', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -239,7 +239,7 @@ describe('vacation request command handlers', () => {
       );
 
     it('a validator approves a pending request', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -258,7 +258,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('rule #6 — requesters cannot approve or reject', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: otherRequester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),
@@ -274,7 +274,7 @@ describe('vacation request command handlers', () => {
     });
 
     it('rule #5 — a rejection requires a comment', async () => {
-      const request = requests.add({
+      const request = requests.seed({
         userId: requester.id,
         startDate: d('2030-02-01'),
         endDate: d('2030-02-05'),

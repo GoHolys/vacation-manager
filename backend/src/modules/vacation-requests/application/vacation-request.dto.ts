@@ -32,10 +32,8 @@ export const toVacationRequestDto = (request: VacationRequestView): VacationRequ
   reason: request.reason,
   status: request.status,
   comments: request.comments,
-  requester: { id: request.user.id, name: request.user.name, email: request.user.email },
-  decidedBy: request.decidedBy
-    ? { id: request.decidedBy.id, name: request.decidedBy.name, email: request.decidedBy.email }
-    : null,
+  requester: { ...request.user },
+  decidedBy: request.decidedBy ? { ...request.decidedBy } : null,
   decidedAt: request.decidedAt?.toISOString() ?? null,
   createdAt: request.createdAt.toISOString(),
   updatedAt: request.updatedAt.toISOString(),

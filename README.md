@@ -45,6 +45,20 @@ team calendar.
 
 ## Quick start
 
+### Option A — the whole application in Docker (one command)
+
+```bash
+npm run app:up        # = docker compose --profile app up --build
+```
+
+Open **http://localhost:8080** and sign in with a demo account below. Compose builds two images
+(`backend/Dockerfile`, `frontend/Dockerfile`), runs migrations and the demo seed in a one-shot
+`migrate` job, then starts the API (non-root Node, health-checked) behind an unprivileged nginx that
+serves the app, proxies `/api` (same origin, no CORS) and adds security headers. Stop with
+`npm run app:down`. Set `JWT_SECRET` in your shell for anything beyond a local demo.
+
+### Option B — local development (hot reload)
+
 **Prerequisites:** Node.js **24 LTS** (or 22.22.2+; npm 10+) and either **Docker** _or_ a local **PostgreSQL 13+**.
 
 ```bash
@@ -246,12 +260,12 @@ vacation-manager/
 │       ├── core/                CQRS buses, errors, clock, dates, pagination, ports
 │       ├── infrastructure/      TypeORM data source, migrations, seed, unit of work, notifier
 │       └── modules/
-│           ├── auth/            Authenticate command, JWT, bcrypt, login throttling
-│           ├── users/           User entity, repository, queries
+│           ├── auth/            Authenticate command, login events, JWT, bcrypt, throttling
+│           ├── users/           Pure User domain object, repository port, queries, TypeORM record
 │           ├── vacation-requests/
-│           │   ├── domain/      Aggregate, VacationPeriod value object, errors, statuses
-│           │   ├── application/ Commands, queries, events, subscribers, ports, DTOs
-│           │   └── infrastructure/ TypeORM repository (write) + read model (queries)
+│           │   ├── domain/      Pure aggregate (records its events), VacationPeriod, events, errors
+│           │   ├── application/ Commands, queries, subscribers, policies, ports, DTOs
+│           │   └── infrastructure/ TypeORM records + mapping, repository (write), read model
 │           └── audit/           Audit-trail entity + event subscriber
 ├── frontend/                    Vue 3 SPA
 │   └── src/
@@ -264,7 +278,7 @@ vacation-manager/
 │       ├── router/              Routes + role guards
 │       └── views/               Login, My requests, Review, Team planner, 404
 ├── e2e/                         Playwright browser flows + axe-core accessibility audit
-└── docker-compose.yml           PostgreSQL for local development
+└── docker-compose.yml           PostgreSQL (dev) · full stack with --profile app
 ```
 
 ### Request pipeline
@@ -324,7 +338,7 @@ The write side and read side are separated (CQRS-lite) through three buses in `s
 
 | Commands (intent — change state) | Domain events (fact — published after commit) | Queries (read only)              |
 | -------------------------------- | --------------------------------------------- | -------------------------------- |
-| `AuthenticateUserCommand`        |                                               | `GetUserQuery`, `ListUsersQuery` |
+| `AuthenticateUserCommand`        | `UserLoggedInEvent`, `UserLoginFailedEvent`   | `GetUserQuery`, `ListUsersQuery` |
 | `CreateVacationRequestCommand`   | `VacationRequestSubmittedEvent`               | `ListVacationRequestsQuery`      |
 | `UpdateVacationRequestCommand`   | `VacationRequestUpdatedEvent`                 | `GetVacationRequestQuery`        |
 | `CancelVacationRequestCommand`   | `VacationRequestCancelledEvent`               | `GetVacationRequestStatsQuery`   |
@@ -336,6 +350,15 @@ The write side and read side are separated (CQRS-lite) through three buses in `s
 - Command handlers run inside a **unit of work** (one transaction, row locks where decisions are made)
   and depend only on **ports** (`VacationRequestRepository`, `UnitOfWork`, `Clock`, `EventPublisher`), so
   they are unit-tested with in-memory fakes.
+- **The aggregate records its own events.** Every state change of `VacationRequest` (`submit`,
+  `reschedule`, `approve`, `reject`, `cancel`) records the matching domain event inside the domain
+  object; a handler cannot change state without the event existing. After the transaction commits, the
+  handler publishes `request.pullEvents()`. A change rejected by a rule records nothing.
+- Every event has a standard envelope: `eventId` (UUID, used for idempotency), `eventName`,
+  `aggregateId`, `occurredAt` and a typed `payload` that always names the `actorId`.
+- Sign-ins publish `UserLoggedInEvent`; failed sign-ins publish `UserLoginFailedEvent` (a security audit
+  signal; the password is never part of an event). The failure event is published for unknown e-mails
+  too, so both failure paths cost the same time and still don't reveal whether an account exists.
 - Events are published **only after the transaction commits**. Subscribers are isolated: a failing
   subscriber is logged and never breaks the request or the other subscribers.
   - `AuditTrailSubscriber` stores every event in `audit_logs` (idempotent on `event_id`).
@@ -452,10 +475,13 @@ suites against PostgreSQL services, and both production builds.
 - **CQRS-lite over a classic service layer.** Commands, queries and events make the architecture
   visible and give every use case one obvious home. Full event sourcing would be overkill here: state
   lives in tables, and events drive side effects and the audit trail.
-- **Rich aggregate + value object.** `VacationRequest` only changes through intention-revealing methods
-  (`submit`, `reschedule`, `approve`, `reject`), and `VacationPeriod` cannot exist in an invalid state.
-  TypeORM entities double as aggregates. That is a pragmatic choice, documented rather than hidden behind
-  a separate persistence model.
+- **Pure domain, separate persistence model.** `User` and the `VacationRequest` aggregate are plain
+  TypeScript classes with private state and no framework imports; they change only through
+  intention-revealing methods (`submit`, `reschedule`, `approve`, `reject`, `cancel`), and
+  `VacationPeriod` cannot exist in an invalid state. TypeORM mappings live in each module's
+  `infrastructure/*.record.ts`; repositories translate records ⇄ aggregates, and the read model returns
+  flat views shaped for the screens, so queries never load aggregates. Credentials are not part of
+  `User`: only the login use case loads a password hash (`findCredentialsByEmail`).
 - **Database as the last line of defence.** Business rules live in the domain, but the critical ones are
   also database constraints. Application checks give friendly errors; constraints guarantee correctness
   under concurrency.
@@ -527,7 +553,8 @@ suites against PostgreSQL services, and both production builds.
     `scripts/codegen.cjs` calls the generator directly.
   - The dev server doesn't URL-decode query strings (decoded in `http/request.ts`).
   - The framework's `Response` CORS defaults omit `PATCH`, so updates use `PUT` with the full resource.
-  - The dev server binds to `localhost` only and prints a few debug lines per request.
-- **Not included:** dark mode, a full-stack Docker image (only PostgreSQL is containerised), and a
-  container-ready HTTP server: `npm start` reuses the framework's dev server (binds `localhost`), the
-  production target being AWS Lambda behind API Gateway.
+  - The dev server binds to `localhost` only, which a container cannot expose. `src/index.ts`
+    therefore serves the handler with the framework's own request listener on a configurable `HOST`
+    (`0.0.0.0` in the Docker image), so local, container and Lambda still share one code path.
+- **Not included:** dark mode. The bundled Docker setup is meant for demos and evaluation; for real
+  traffic, deploy the Lambda `handler` behind API Gateway (`npm run build:lambda -w backend`).

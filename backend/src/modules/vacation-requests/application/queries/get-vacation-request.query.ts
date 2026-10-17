@@ -25,7 +25,7 @@ export class GetVacationRequestHandler implements QueryHandler<GetVacationReques
     const request = await this.readModel.findById(requestId);
     // Requesters may only see their own requests; respond 404 rather than 403 to avoid
     // disclosing the existence of other people's requests.
-    if (!request || (viewer.role === UserRole.REQUESTER && !request.isOwnedBy(viewer.id))) {
+    if (!request || (viewer.role === UserRole.REQUESTER && request.userId !== viewer.id)) {
       throw VacationRequestErrors.notFound();
     }
     return toVacationRequestDto(request);

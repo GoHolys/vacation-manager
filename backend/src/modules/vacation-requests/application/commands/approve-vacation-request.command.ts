@@ -1,7 +1,6 @@
 import { Command, type CommandHandler } from '../../../../core/cqrs/command-bus';
 import { UserRole } from '../../../users/domain/user-role';
 import { VacationRequestErrors } from '../../domain/vacation-request.errors';
-import { VacationRequestApprovedEvent } from '../events/vacation-request.events';
 import type { VacationRequestsScope } from '../ports';
 import type { VacationRequestCommandDependencies } from './dependencies';
 
@@ -38,10 +37,12 @@ export class ApproveVacationRequestHandler implements CommandHandler<ApproveVaca
       const request = await vacationRequests.findById(command.requestId, { lock: true });
       if (!request) throw VacationRequestErrors.notFound();
 
+      // The aggregate records VacationRequestApprovedEvent.
       request.approve(command.validatorId, command.comment, this.deps.clock.now());
-      return vacationRequests.save(request);
+      await vacationRequests.save(request);
+      return request;
     });
 
-    await this.deps.events.publish(VacationRequestApprovedEvent.from(request, command.validatorId));
+    await this.deps.events.publish(...request.pullEvents());
   }
 }

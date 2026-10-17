@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import type { DataSource } from 'typeorm';
 import { addDays, type IsoDate } from '../../core/iso-date';
-import { User } from '../../modules/users/domain/user.entity';
+import { UserRecord } from '../../modules/users/infrastructure/user.record';
 import { UserRole } from '../../modules/users/domain/user-role';
-import { VacationRequest } from '../../modules/vacation-requests/domain/vacation-request.entity';
+import { VacationRequestRecord } from '../../modules/vacation-requests/infrastructure/vacation-request.record';
 import {
   VacationRequestStatus,
   type VacationRequestStatus as Status,
@@ -202,7 +202,7 @@ export interface SeedOptions {
 /** Inserts demo users and vacation requests. Refuses to run on a non-empty database unless forced. */
 export async function seedDatabase(dataSource: DataSource, options: SeedOptions): Promise<void> {
   const log = options.log ?? console.log;
-  const existingUsers = await dataSource.getRepository(User).count();
+  const existingUsers = await dataSource.getRepository(UserRecord).count();
   if (existingUsers > 0 && !options.force) {
     log(
       `Database already contains ${existingUsers} user(s) — skipping seed (use --force to reseed).`,
@@ -218,8 +218,8 @@ export async function seedDatabase(dataSource: DataSource, options: SeedOptions)
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, options.bcryptRounds);
     const userIds = new Map<string, string>();
     for (const seed of USERS) {
-      const user = await manager.getRepository(User).save(
-        manager.getRepository(User).create({
+      const user = await manager.getRepository(UserRecord).save(
+        manager.getRepository(UserRecord).create({
           name: seed.name,
           email: seed.email,
           password: passwordHash,
@@ -236,10 +236,12 @@ export async function seedDatabase(dataSource: DataSource, options: SeedOptions)
       return id;
     };
 
+    // Demo history (past and already-decided requests) is written straight to the tables:
+    // it describes state that the domain rules would, rightly, refuse to create "today".
     await manager
       .createQueryBuilder()
       .insert()
-      .into(VacationRequest)
+      .into(VacationRequestRecord)
       .values(
         REQUESTS.map((seed) => {
           const createdAt = new Date(now - seed.createdDaysAgo * 86_400_000);

@@ -88,6 +88,25 @@ describe('authentication & authorization', () => {
     expect(response.body.error.code).toBe('INVALID_CREDENTIALS');
   });
 
+  it('records sign-ins and failed sign-ins as events in the audit trail', async () => {
+    await api.request('POST', '/api/v1/auth/login', {
+      body: { email: 'bob@example.com', password: 'wrong' },
+    });
+    await api.login(api.users.bob); // a successful sign-in also resets the failure counter
+
+    const rows: { event_name: string; aggregate_id: string; payload: { email?: string } }[] =
+      await api.app.dataSource.query(
+        `SELECT event_name, aggregate_id, payload FROM audit_logs
+          WHERE event_name LIKE 'user.%' AND aggregate_id = $1 ORDER BY occurred_at`,
+        [api.users.bob.id],
+      );
+    expect(rows.map((row) => row.event_name).slice(-2)).toEqual([
+      'user.login-failed',
+      'user.logged-in',
+    ]);
+    expect(JSON.stringify(rows)).not.toContain('wrong');
+  });
+
   it('validates the login payload', async () => {
     const response = await api.request('POST', '/api/v1/auth/login', { body: { email: 'nope' } });
     expect(response.status).toBe(422);
@@ -381,7 +400,7 @@ describe('validator interface', () => {
 
   it('records every domain event in the audit trail', async () => {
     const rows: { event_name: string }[] = await api.app.dataSource.query(
-      'SELECT event_name FROM audit_logs ORDER BY occurred_at',
+      `SELECT event_name FROM audit_logs WHERE event_name LIKE 'vacation-request.%' ORDER BY occurred_at`,
     );
     expect(rows.map((row) => row.event_name)).toEqual([
       'vacation-request.submitted',

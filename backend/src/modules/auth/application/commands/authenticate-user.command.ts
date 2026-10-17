@@ -1,8 +1,10 @@
 import { Command, type CommandHandler } from '../../../../core/cqrs/command-bus';
+import type { EventPublisher } from '../../../../core/cqrs/event-bus';
 import { UnauthorizedError } from '../../../../core/errors';
 import type { UserRepository } from '../../../users/application/user.repository';
 import { toUserDto, type UserDto } from '../../../users/application/user.dto';
-import { User } from '../../../users/domain/user.entity';
+import { User } from '../../../users/domain/user';
+import { UserLoggedInEvent, UserLoginFailedEvent } from '../../domain/authentication.events';
 import type { LoginAttemptLimiter, PasswordHasher, TokenService } from '../ports';
 
 export interface AuthenticationResultDto {
@@ -37,6 +39,7 @@ export class AuthenticateUserHandler implements CommandHandler<AuthenticateUserC
     private readonly hasher: PasswordHasher,
     private readonly tokens: TokenService,
     private readonly limiter: LoginAttemptLimiter,
+    private readonly events: EventPublisher,
   ) {
     this.dummyHash = hasher.hash('timing-safe-dummy-password');
     this.dummyHash.catch(() => undefined); // surfaced (re-thrown) when awaited during a login
@@ -49,18 +52,23 @@ export class AuthenticateUserHandler implements CommandHandler<AuthenticateUserC
     const throttleKey = command.clientIp ? `${email}|${command.clientIp}` : email;
     this.limiter.assertAllowed(throttleKey);
 
-    const user = await this.users.findByEmailWithPassword(email);
+    const credentials = await this.users.findCredentialsByEmail(email);
     const passwordMatches = await this.hasher.verify(
       command.password,
-      user?.password ?? (await this.dummyHash),
+      credentials?.passwordHash ?? (await this.dummyHash),
     );
 
-    if (!user || !passwordMatches) {
+    if (!credentials || !passwordMatches) {
       this.limiter.recordFailure(throttleKey);
+      // Published on both paths (unknown e-mail and wrong password) so they cost the same time.
+      await this.events.publish(
+        UserLoginFailedEvent.of(email, credentials?.user.id ?? null, command.clientIp),
+      );
       // Same message for unknown e-mail and wrong password.
       throw new UnauthorizedError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
+    const { user } = credentials;
     this.limiter.reset(throttleKey);
     const issued = this.tokens.issue({
       sub: user.id,
@@ -68,6 +76,7 @@ export class AuthenticateUserHandler implements CommandHandler<AuthenticateUserC
       name: user.name,
       email: user.email,
     });
+    await this.events.publish(UserLoggedInEvent.of(user, command.clientIp));
 
     return {
       accessToken: issued.token,

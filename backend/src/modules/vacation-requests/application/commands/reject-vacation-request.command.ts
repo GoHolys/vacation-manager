@@ -1,6 +1,5 @@
 import { Command, type CommandHandler } from '../../../../core/cqrs/command-bus';
 import { VacationRequestErrors } from '../../domain/vacation-request.errors';
-import { VacationRequestRejectedEvent } from '../events/vacation-request.events';
 import { assertIsValidator } from './approve-vacation-request.command';
 import type { VacationRequestCommandDependencies } from './dependencies';
 
@@ -24,11 +23,13 @@ export class RejectVacationRequestHandler implements CommandHandler<RejectVacati
       const request = await vacationRequests.findById(command.requestId, { lock: true });
       if (!request) throw VacationRequestErrors.notFound();
 
-      // Rule #5 is enforced by the aggregate (and by a CHECK constraint in the database).
+      // Rule #5 is enforced by the aggregate (and by a CHECK constraint in the database);
+      // the aggregate records VacationRequestRejectedEvent.
       request.reject(command.validatorId, command.comment, this.deps.clock.now());
-      return vacationRequests.save(request);
+      await vacationRequests.save(request);
+      return request;
     });
 
-    await this.deps.events.publish(VacationRequestRejectedEvent.from(request, command.validatorId));
+    await this.deps.events.publish(...request.pullEvents());
   }
 }

@@ -2,11 +2,11 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import type { AppConfig } from '../../config/env';
 import { AuditLog } from '../../modules/audit/audit-log.entity';
-import { User } from '../../modules/users/domain/user.entity';
-import { VacationRequest } from '../../modules/vacation-requests/domain/vacation-request.entity';
+import { UserRecord } from '../../modules/users/infrastructure/user.record';
+import { VacationRequestRecord } from '../../modules/vacation-requests/infrastructure/vacation-request.record';
 import { InitialSchema1760659200000 } from './migrations/1760659200000-InitialSchema';
 
-export const ENTITIES = [User, VacationRequest, AuditLog];
+export const ENTITIES = [UserRecord, VacationRequestRecord, AuditLog];
 export const MIGRATIONS = [InitialSchema1760659200000];
 
 /**

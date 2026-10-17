@@ -2,9 +2,8 @@ import { Command, type CommandHandler } from '../../../../core/cqrs/command-bus'
 import { UnauthorizedError } from '../../../../core/errors';
 import { UserRole } from '../../../users/domain/user-role';
 import { VacationPeriod } from '../../domain/vacation-period';
-import { VacationRequest } from '../../domain/vacation-request.entity';
+import { VacationRequest } from '../../domain/vacation-request';
 import { VacationRequestErrors } from '../../domain/vacation-request.errors';
-import { VacationRequestSubmittedEvent } from '../events/vacation-request.events';
 import { assertNoOverlap } from '../policies/overlap.policy';
 import type { VacationRequestCommandDependencies } from './dependencies';
 
@@ -36,12 +35,17 @@ export class CreateVacationRequestHandler implements CommandHandler<CreateVacati
       );
       await assertNoOverlap(vacationRequests, requester.id, period);
 
-      return vacationRequests.save(
-        VacationRequest.submit({ userId: requester.id, period, reason: command.reason }),
+      // The aggregate records VacationRequestSubmittedEvent.
+      const submitted = VacationRequest.submit(
+        { userId: requester.id, period, reason: command.reason },
+        this.deps.clock.now(),
       );
+      await vacationRequests.add(submitted);
+      return submitted;
     });
 
-    await this.deps.events.publish(VacationRequestSubmittedEvent.from(request));
+    // Published only after the transaction committed.
+    await this.deps.events.publish(...request.pullEvents());
     return { id: request.id };
   }
 }

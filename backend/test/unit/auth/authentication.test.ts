@@ -10,7 +10,8 @@ import { BcryptPasswordHasher } from '../../../src/modules/auth/infrastructure/b
 import { InMemoryLoginAttemptLimiter } from '../../../src/modules/auth/infrastructure/in-memory-login-attempt-limiter';
 import { JwtTokenService } from '../../../src/modules/auth/infrastructure/jwt-token.service';
 import { UserRole } from '../../../src/modules/users/domain/user-role';
-import { InMemoryUserRepository, makeUser } from '../../support/in-memory';
+import { UNKNOWN_ACCOUNT_ID } from '../../../src/modules/auth/domain/authentication.events';
+import { InMemoryUserRepository, makeUser, RecordingEventPublisher } from '../../support/in-memory';
 
 const JWT = {
   secret: 'unit-test-secret-unit-test-secret-1234',
@@ -25,6 +26,7 @@ describe('authentication', () => {
   let clock: FixedClock;
   let users: InMemoryUserRepository;
   let handler: AuthenticateUserHandler;
+  let events: RecordingEventPublisher;
 
   beforeEach(async () => {
     clock = new FixedClock(new Date('2030-01-15T10:00:00Z'));
@@ -33,11 +35,13 @@ describe('authentication', () => {
       password: await hasher.hash('correct horse'),
     });
     users = new InMemoryUserRepository([user]);
+    events = new RecordingEventPublisher();
     handler = new AuthenticateUserHandler(
       users,
       hasher,
       tokens,
       new InMemoryLoginAttemptLimiter({ maxAttempts: 3, windowMs: 15 * 60_000 }, clock),
+      events,
     );
   });
 
@@ -53,6 +57,29 @@ describe('authentication', () => {
       sub: session.user.id,
       role: 'requester',
     });
+  });
+
+  it('publishes UserLoggedInEvent after a successful sign-in', async () => {
+    const session = await login('jane@example.com', 'correct horse');
+    expect(events.names()).toEqual(['user.logged-in']);
+    expect(events.published[0]).toMatchObject({
+      aggregateId: session.user.id,
+      payload: { userId: session.user.id, actorId: session.user.id, role: 'requester' },
+    });
+  });
+
+  it('publishes UserLoginFailedEvent for a wrong password and for an unknown e-mail', async () => {
+    await login('jane@example.com', 'nope').catch(() => undefined);
+    await login('ghost@example.com', 'nope').catch(() => undefined);
+
+    expect(events.names()).toEqual(['user.login-failed', 'user.login-failed']);
+    const [wrongPassword, unknownAccount] = events.published;
+    expect(wrongPassword?.aggregateId).toBe(users.users[0]?.id);
+    expect(wrongPassword?.payload).toMatchObject({ email: 'jane@example.com' });
+    expect(unknownAccount?.aggregateId).toBe(UNKNOWN_ACCOUNT_ID);
+    expect(unknownAccount?.payload).toMatchObject({ userId: null, email: 'ghost@example.com' });
+    // The password itself is never part of an event.
+    expect(JSON.stringify(events.published)).not.toContain('nope');
   });
 
   it('uses the same error for a wrong password and an unknown e-mail', async () => {

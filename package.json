@@ -2,7 +2,7 @@
   "name": "vacation-manager",
   "version": "1.0.0",
   "private": true,
-  "description": "Vacation request management — Vue 3 + Node.js (Common Event Framework) + PostgreSQL/TypeORM",
+  "description": "Vacation request management \u2014 Vue 3 + Node.js (Common Event Framework) + PostgreSQL/TypeORM",
   "license": "MIT",
   "workspaces": [
     "backend",
@@ -27,6 +27,8 @@
     "codegen": "npm run codegen -w backend && npm run codegen:api -w frontend",
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
+    "app:up": "docker compose --profile app up --build",
+    "app:down": "docker compose --profile app down",
     "db:migrate": "npm run db:migrate -w backend",
     "db:seed": "npm run db:seed -w backend",
     "db:reset": "npm run db:reset -w backend",

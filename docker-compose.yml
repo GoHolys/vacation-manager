@@ -1,5 +1,24 @@
 name: vacation-manager
 
+# Local development (default):      npm run db:up        → PostgreSQL only
+# Whole application in containers:  npm run app:up       → http://localhost:8080
+#   (= docker compose --profile app up --build)
+
+x-api-environment: &api-environment
+  NODE_ENV: production
+  LOG_LEVEL: info
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USER: vacation
+  DB_PASSWORD: vacation
+  DB_NAME: vacation_manager
+  # Demo default so one command is enough. Set JWT_SECRET to a long random value for any real use.
+  JWT_SECRET: ${JWT_SECRET:-docker-demo-jwt-secret-override-me-for-real-deployments-1}
+  FRONT_END_URL: http://localhost:8080
+  APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+  # nginx (the web container) is the only client and sets X-Forwarded-For.
+  TRUST_PROXY: 'true'
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -20,6 +39,46 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # One-shot job: applies migrations, then loads demo data (skipped when users already exist).
+  migrate:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: vacation-manager-api
+    environment: *api-environment
+    command:
+      [
+        'sh',
+        '-c',
+        'node dist/infrastructure/database/cli.js migrate && node dist/infrastructure/database/cli.js seed',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    profiles: [app]
+    image: vacation-manager-api
+    restart: unless-stopped
+    environment: *api-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: vacation-manager-web
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:

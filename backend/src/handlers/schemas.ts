@@ -5,7 +5,7 @@ import { USER_ROLES } from '../modules/users/domain/user-role';
 import {
   COMMENT_MAX_LENGTH,
   REASON_MAX_LENGTH,
-} from '../modules/vacation-requests/domain/vacation-request.entity';
+} from '../modules/vacation-requests/domain/vacation-request';
 import { VACATION_REQUEST_STATUSES } from '../modules/vacation-requests/domain/vacation-request-status';
 
 /** Reusable request schemas (shape & format only — business rules live in the domain). */

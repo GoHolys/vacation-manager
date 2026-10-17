@@ -1,19 +1,42 @@
 import type { DataSource, SelectQueryBuilder } from 'typeorm';
 import type { IsoDate } from '../../../core/iso-date';
 import { type PageRequest, toOffset } from '../../../core/pagination';
+import type { UserRecord } from '../../users/infrastructure/user.record';
 import type {
+  CalendarEntryView,
   StatusCounts,
+  UserSummaryView,
   VacationRequestListCriteria,
   VacationRequestReadModel,
   VacationRequestView,
 } from '../application/ports';
-import { VacationRequest } from '../domain/vacation-request.entity';
 import { BLOCKING_STATUSES, VacationRequestStatus } from '../domain/vacation-request-status';
+import { VacationRequestRecord } from './vacation-request.record';
 
 const SORT_COLUMNS = {
   createdAt: 'request.createdAt',
   startDate: 'request.startDate',
 } as const;
+
+const toUserSummary = ({ id, name, email }: UserRecord): UserSummaryView => ({ id, name, email });
+
+const toView = (record: VacationRequestRecord): VacationRequestView => {
+  if (!record.user) throw new Error('Read model invariant: the requester relation was not loaded');
+  return {
+    id: record.id,
+    userId: record.userId,
+    startDate: record.startDate,
+    endDate: record.endDate,
+    reason: record.reason,
+    status: record.status,
+    comments: record.comments,
+    decidedAt: record.decidedAt,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+    user: toUserSummary(record.user),
+    decidedBy: record.decidedBy ? toUserSummary(record.decidedBy) : null,
+  };
+};
 
 /**
  * Query-side persistence. Joins only what the views need and pushes filtering, ordering,
@@ -22,21 +45,23 @@ const SORT_COLUMNS = {
 export class TypeOrmVacationRequestReadModel implements VacationRequestReadModel {
   constructor(private readonly dataSource: DataSource) {}
 
-  private baseQuery(): SelectQueryBuilder<VacationRequest> {
-    return this.dataSource
-      .getRepository(VacationRequest)
-      .createQueryBuilder('request')
+  private requests(): SelectQueryBuilder<VacationRequestRecord> {
+    return this.dataSource.getRepository(VacationRequestRecord).createQueryBuilder('request');
+  }
+
+  private withPeople(): SelectQueryBuilder<VacationRequestRecord> {
+    return this.requests()
       .innerJoinAndSelect('request.user', 'user')
       .leftJoinAndSelect('request.decidedBy', 'decidedBy');
   }
 
   async findById(id: string): Promise<VacationRequestView | null> {
-    const request = await this.baseQuery().where('request.id = :id', { id }).getOne();
-    return request as VacationRequestView | null;
+    const record = await this.withPeople().where('request.id = :id', { id }).getOne();
+    return record ? toView(record) : null;
   }
 
   async list(criteria: VacationRequestListCriteria, page: PageRequest) {
-    const query = this.baseQuery();
+    const query = this.withPeople();
     if (criteria.userId) query.andWhere('request.userId = :userId', { userId: criteria.userId });
     if (criteria.status) query.andWhere('request.status = :status', { status: criteria.status });
 
@@ -48,14 +73,12 @@ export class TypeOrmVacationRequestReadModel implements VacationRequestReadModel
       .skip(toOffset(page))
       .take(page.pageSize);
 
-    const [items, total] = await query.getManyAndCount();
-    return { items: items as VacationRequestView[], total };
+    const [records, total] = await query.getManyAndCount();
+    return { items: records.map(toView), total };
   }
 
   async countByStatus(userId?: string): Promise<StatusCounts> {
-    const query = this.dataSource
-      .getRepository(VacationRequest)
-      .createQueryBuilder('request')
+    const query = this.requests()
       .select('request.status', 'status')
       .addSelect('COUNT(*)::int', 'count')
       .groupBy('request.status');
@@ -71,19 +94,22 @@ export class TypeOrmVacationRequestReadModel implements VacationRequestReadModel
     return counts;
   }
 
-  findBlockingInRange(from: IsoDate, to: IsoDate): Promise<VacationRequest[]> {
-    return (
-      this.dataSource
-        .getRepository(VacationRequest)
-        .createQueryBuilder('request')
-        .where('request.status IN (:...statuses)', { statuses: BLOCKING_STATUSES })
-        // Same range expression as the exclusion constraint (GiST-indexable).
-        .andWhere(
-          `daterange(request.startDate, request.endDate, '[]') && daterange(CAST(:from AS date), CAST(:to AS date), '[]')`,
-          { from, to },
-        )
-        .orderBy('request.startDate', 'ASC')
-        .getMany()
-    );
+  async findBlockingInRange(from: IsoDate, to: IsoDate): Promise<CalendarEntryView[]> {
+    const records = await this.requests()
+      .where('request.status IN (:...statuses)', { statuses: BLOCKING_STATUSES })
+      // Same range expression as the exclusion constraint (GiST-indexable).
+      .andWhere(
+        `daterange(request.startDate, request.endDate, '[]') && daterange(CAST(:from AS date), CAST(:to AS date), '[]')`,
+        { from, to },
+      )
+      .orderBy('request.startDate', 'ASC')
+      .getMany();
+    return records.map(({ id, userId, startDate, endDate, status }) => ({
+      id,
+      userId,
+      startDate,
+      endDate,
+      status,
+    }));
   }
 }

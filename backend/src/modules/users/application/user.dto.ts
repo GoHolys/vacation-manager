@@ -1,4 +1,4 @@
-import type { User } from '../domain/user.entity';
+import type { User } from '../domain/user';
 import type { UserRole } from '../domain/user-role';
 
 export interface UserDto {

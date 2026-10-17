@@ -1,30 +1,33 @@
 import type { EntityManager, Repository } from 'typeorm';
-import type { UserRepository } from '../application/user.repository';
-import { User } from '../domain/user.entity';
+import type { UserCredentials, UserRepository } from '../application/user.repository';
+import { User } from '../domain/user';
 import type { UserRole } from '../domain/user-role';
+import { toUser, UserRecord } from './user.record';
 
 export class TypeOrmUserRepository implements UserRepository {
-  private readonly repository: Repository<User>;
+  private readonly repository: Repository<UserRecord>;
 
   constructor(manager: EntityManager) {
-    this.repository = manager.getRepository(User);
+    this.repository = manager.getRepository(UserRecord);
   }
 
-  findById(id: string): Promise<User | null> {
-    return this.repository.findOneBy({ id });
+  async findById(id: string): Promise<User | null> {
+    const record = await this.repository.findOneBy({ id });
+    return record ? toUser(record) : null;
   }
 
-  findByEmailWithPassword(email: string): Promise<User | null> {
-    return this.repository
+  async findCredentialsByEmail(email: string): Promise<UserCredentials | null> {
+    const record = await this.repository
       .createQueryBuilder('user')
       .addSelect('user.password')
       .where('user.email = :email', { email: User.normalizeEmail(email) })
       .getOne();
+    return record ? { user: toUser(record), passwordHash: record.password } : null;
   }
 
-  list(filter: { role?: UserRole } = {}): Promise<User[]> {
+  async list(filter: { role?: UserRole } = {}): Promise<User[]> {
     const query = this.repository.createQueryBuilder('user').orderBy('user.name', 'ASC');
     if (filter.role) query.where('user.role = :role', { role: filter.role });
-    return query.getMany();
+    return (await query.getMany()).map(toUser);
   }
 }

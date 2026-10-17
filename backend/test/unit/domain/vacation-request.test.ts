@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { asIsoDate } from '../../../src/core/iso-date';
 import { VacationPeriod } from '../../../src/modules/vacation-requests/domain/vacation-period';
-import { VacationRequest } from '../../../src/modules/vacation-requests/domain/vacation-request.entity';
+import { VacationRequest } from '../../../src/modules/vacation-requests/domain/vacation-request';
 
 const TODAY = asIsoDate('2030-01-15');
 const NOW = new Date('2030-01-15T10:00:00Z');
 const period = (start: string, end: string) => VacationPeriod.create(start, end, TODAY);
 const newRequest = () =>
-  VacationRequest.submit({
-    userId: 'user-1',
-    period: period('2030-02-01', '2030-02-05'),
-    reason: '  Trip  ',
-  });
+  VacationRequest.submit(
+    { userId: 'user-1', period: period('2030-02-01', '2030-02-05'), reason: '  Trip  ' },
+    NOW,
+  );
 
 describe('VacationPeriod', () => {
   it('accepts a period starting today', () => {
@@ -87,7 +86,7 @@ describe('VacationRequest aggregate', () => {
   it('rule #3 — approved requests cannot be modified', () => {
     const request = newRequest();
     request.approve('validator-1', null, NOW);
-    expect(() => request.reschedule(period('2030-03-01', '2030-03-02'))).toThrow(
+    expect(() => request.reschedule(period('2030-03-01', '2030-03-02'), null, NOW)).toThrow(
       expect.objectContaining({ code: 'REQUEST_NOT_MODIFIABLE', status: 409 }),
     );
     expect(() => request.assertModifiable()).toThrow();
@@ -97,7 +96,11 @@ describe('VacationRequest aggregate', () => {
     const request = newRequest();
     request.reject('validator-1', 'Busy week', NOW);
 
-    const { resubmitted } = request.reschedule(period('2030-03-01', '2030-03-04'), 'New dates');
+    const { resubmitted } = request.reschedule(
+      period('2030-03-01', '2030-03-04'),
+      'New dates',
+      NOW,
+    );
 
     expect(resubmitted).toBe(true);
     expect(request).toMatchObject({
@@ -113,7 +116,102 @@ describe('VacationRequest aggregate', () => {
 
   it('rescheduling a pending request keeps it pending', () => {
     const request = newRequest();
-    expect(request.reschedule(period('2030-03-01', '2030-03-04')).resubmitted).toBe(false);
+    expect(request.reschedule(period('2030-03-01', '2030-03-04'), null, NOW).resubmitted).toBe(
+      false,
+    );
     expect(request.status).toBe('pending');
+  });
+
+  it('enforces the maximum length of the reason and the comment', () => {
+    expect(() =>
+      VacationRequest.submit(
+        { userId: 'user-1', period: period('2030-02-01', '2030-02-05'), reason: 'x'.repeat(501) },
+        NOW,
+      ),
+    ).toThrow(expect.objectContaining({ code: 'VALIDATION_ERROR' }));
+    expect(() => newRequest().reject('validator-1', 'x'.repeat(1001), NOW)).toThrow(
+      expect.objectContaining({ code: 'VALIDATION_ERROR' }),
+    );
+  });
+
+  it('can be cancelled unless approved', () => {
+    const approved = newRequest();
+    approved.approve('validator-1', null, NOW);
+    expect(() => approved.cancel()).toThrow(
+      expect.objectContaining({ code: 'REQUEST_NOT_MODIFIABLE' }),
+    );
+    expect(() => newRequest().cancel()).not.toThrow();
+  });
+});
+
+describe('VacationRequest domain events', () => {
+  it('records VacationRequestSubmittedEvent when submitted', () => {
+    const request = newRequest();
+    const events = request.pullEvents();
+
+    expect(events.map((event) => event.eventName)).toEqual(['vacation-request.submitted']);
+    expect(events[0]).toMatchObject({
+      aggregateId: request.id,
+      payload: {
+        requestId: request.id,
+        userId: 'user-1',
+        actorId: 'user-1',
+        startDate: '2030-02-01',
+        endDate: '2030-02-05',
+        status: 'pending',
+        reason: 'Trip',
+      },
+    });
+    expect(events[0]?.eventId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('pullEvents returns each event once', () => {
+    const request = newRequest();
+    expect(request.pullEvents()).toHaveLength(1);
+    expect(request.pullEvents()).toHaveLength(0);
+  });
+
+  it('records one event per state change, attributed to the right actor', () => {
+    const request = newRequest();
+    request.reject('validator-1', 'Busy week', NOW);
+    request.reschedule(period('2030-03-01', '2030-03-04'), 'New dates', NOW);
+    request.approve('validator-2', 'Enjoy', NOW);
+
+    const events = request.pullEvents();
+    expect(events.map((event) => event.eventName)).toEqual([
+      'vacation-request.submitted',
+      'vacation-request.rejected',
+      'vacation-request.updated',
+      'vacation-request.approved',
+    ]);
+    expect(events[1]?.payload).toMatchObject({ actorId: 'validator-1', comment: 'Busy week' });
+    expect(events[2]?.payload).toMatchObject({
+      actorId: 'user-1',
+      resubmitted: true,
+      previous: { startDate: '2030-02-01', endDate: '2030-02-05', reason: 'Trip' },
+    });
+    expect(events[3]?.payload).toMatchObject({ actorId: 'validator-2', status: 'approved' });
+  });
+
+  it('records VacationRequestCancelledEvent when withdrawn', () => {
+    const request = newRequest();
+    request.pullEvents();
+    request.cancel();
+    expect(request.pullEvents().map((event) => event.eventName)).toEqual([
+      'vacation-request.cancelled',
+    ]);
+  });
+
+  it('records nothing when a rule rejects the change', () => {
+    const request = newRequest();
+    request.pullEvents();
+    expect(() => request.reject('validator-1', '  ', NOW)).toThrow();
+    expect(request.pullEvents()).toHaveLength(0);
+  });
+
+  it('is rebuilt from stored state without recording events', () => {
+    const restored = VacationRequest.restore(newRequest().snapshot());
+    expect(restored.pullEvents()).toHaveLength(0);
+    expect(restored.status).toBe('pending');
   });
 });
