@@ -19,7 +19,10 @@ import { BcryptPasswordHasher } from '../modules/auth/infrastructure/bcrypt-pass
 import { InMemoryLoginAttemptLimiter } from '../modules/auth/infrastructure/in-memory-login-attempt-limiter';
 import { JwtTokenService } from '../modules/auth/infrastructure/jwt-token.service';
 import { GetUserHandler, GetUserQuery } from '../modules/users/application/queries/get-user.query';
-import { ListUsersHandler, ListUsersQuery } from '../modules/users/application/queries/list-users.query';
+import {
+  ListUsersHandler,
+  ListUsersQuery,
+} from '../modules/users/application/queries/list-users.query';
 import { TypeOrmUserRepository } from '../modules/users/infrastructure/typeorm-user.repository';
 import {
   ApproveVacationRequestCommand,
@@ -96,7 +99,8 @@ export async function createApplication(
   overrides: ApplicationOverrides = {},
 ): Promise<Application> {
   const logger =
-    overrides.logger ?? createLogger({ level: config.logLevel, pretty: config.env === 'development' });
+    overrides.logger ??
+    createLogger({ level: config.logLevel, pretty: config.env === 'development' });
   const clock = overrides.clock ?? new SystemClock(config.timeZone);
 
   const dataSource = createDataSource(config.database);

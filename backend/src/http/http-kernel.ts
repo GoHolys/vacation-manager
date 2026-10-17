@@ -52,13 +52,19 @@ export function createHttpKernel({ routeSecurity, getApplication }: HttpKernelOp
 
       const route = getRouteConfig(event);
       if (!route?.handler) {
-        throw new NotFoundError(`No route matches ${event.method} ${event.path}`, 'ROUTE_NOT_FOUND');
+        throw new NotFoundError(
+          `No route matches ${event.method} ${event.path}`,
+          'ROUTE_NOT_FOUND',
+        );
       }
 
       const policy = routeSecurity.policyFor(route);
       // Framework introspection routes (/doc, /context, /dependencies) are dev-only.
       if (policy.builtin && app.config.env === 'production') {
-        throw new NotFoundError(`No route matches ${event.method} ${event.path}`, 'ROUTE_NOT_FOUND');
+        throw new NotFoundError(
+          `No route matches ${event.method} ${event.path}`,
+          'ROUTE_NOT_FOUND',
+        );
       }
 
       const handler = resolveHandlerRef(route.handler) as RouteHandlerFn | undefined;

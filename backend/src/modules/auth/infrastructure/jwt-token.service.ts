@@ -37,13 +37,21 @@ export class JwtTokenService implements TokenService {
       }) as JwtPayload;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new UnauthorizedError('Your session has expired, please sign in again', 'TOKEN_EXPIRED');
+        throw new UnauthorizedError(
+          'Your session has expired, please sign in again',
+          'TOKEN_EXPIRED',
+        );
       }
       throw new UnauthorizedError('Invalid access token', 'INVALID_TOKEN');
     }
 
     const { sub, role, name, email } = payload;
-    if (typeof sub !== 'string' || !isUserRole(role) || typeof name !== 'string' || typeof email !== 'string') {
+    if (
+      typeof sub !== 'string' ||
+      !isUserRole(role) ||
+      typeof name !== 'string' ||
+      typeof email !== 'string'
+    ) {
       throw new UnauthorizedError('Invalid access token', 'INVALID_TOKEN');
     }
     return { sub, role, name, email };

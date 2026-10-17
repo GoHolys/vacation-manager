@@ -40,7 +40,9 @@ export function readQuery(event: CommonEvent): Record<string, string> {
 /** Parses a JSON request body, enforcing size and content-type. Empty bodies yield `{}`. */
 export function readJsonBody(event: CommonEvent): unknown {
   if (!event.body) return {};
-  const text = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
+  const text = event.isBase64Encoded
+    ? Buffer.from(event.body, 'base64').toString('utf8')
+    : event.body;
   if (!text.trim()) return {};
 
   if (Buffer.byteLength(text, 'utf8') > MAX_BODY_BYTES) {

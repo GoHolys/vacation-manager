@@ -28,11 +28,17 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const dataSource = createDataSource({ ...config.database, logging: false });
   await dataSource.initialize();
-  console.log(`→ ${command} on ${config.database.database}@${config.database.host}:${config.database.port}`);
+  console.log(
+    `→ ${command} on ${config.database.database}@${config.database.host}:${config.database.port}`,
+  );
 
   const runMigrations = async () => {
     const applied = await dataSource.runMigrations({ transaction: 'each' });
-    console.log(applied.length ? `Applied: ${applied.map((m) => m.name).join(', ')}` : 'No pending migrations.');
+    console.log(
+      applied.length
+        ? `Applied: ${applied.map((m) => m.name).join(', ')}`
+        : 'No pending migrations.',
+    );
   };
   const seed = (force: boolean) =>
     seedDatabase(dataSource, {

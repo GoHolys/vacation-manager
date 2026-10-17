@@ -12,9 +12,9 @@ import type {
 const formatPeriod = (start: string, end: string) => `${start} → ${end}`;
 
 /** Tells the requester that a validator approved or rejected their request. */
-export class NotifyRequesterOfDecision
-  implements EventHandler<VacationRequestApprovedEvent | VacationRequestRejectedEvent>
-{
+export class NotifyRequesterOfDecision implements EventHandler<
+  VacationRequestApprovedEvent | VacationRequestRejectedEvent
+> {
   readonly name = 'NotifyRequesterOfDecision';
 
   constructor(
@@ -38,9 +38,9 @@ export class NotifyRequesterOfDecision
 }
 
 /** Tells every validator that a request is waiting for review. */
-export class NotifyValidatorsOfPendingRequest
-  implements EventHandler<VacationRequestSubmittedEvent | VacationRequestUpdatedEvent>
-{
+export class NotifyValidatorsOfPendingRequest implements EventHandler<
+  VacationRequestSubmittedEvent | VacationRequestUpdatedEvent
+> {
   readonly name = 'NotifyValidatorsOfPendingRequest';
 
   constructor(

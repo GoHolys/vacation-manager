@@ -9,6 +9,7 @@
     "predev": "npm run codegen",
     "dev": "tsx watch --clear-screen=false src/index.ts --local",
     "build": "npm run codegen && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
+    "build:lambda": "npm run codegen && node scripts/build-lambda.cjs",
     "start": "node dist/index.js --local",
     "typecheck": "npm run codegen && tsc --noEmit",
     "lint": "eslint .",

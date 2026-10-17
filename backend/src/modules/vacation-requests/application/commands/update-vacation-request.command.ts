@@ -26,18 +26,24 @@ export class UpdateVacationRequestHandler implements CommandHandler<UpdateVacati
   constructor(private readonly deps: VacationRequestCommandDependencies) {}
 
   async execute(command: UpdateVacationRequestCommand) {
-    const { request, resubmitted } = await this.deps.unitOfWork.run(async ({ vacationRequests }) => {
-      const request = await vacationRequests.findById(command.requestId, { lock: true });
-      if (!request) throw VacationRequestErrors.notFound();
-      if (!request.isOwnedBy(command.actorId)) throw VacationRequestErrors.notOwner();
-      request.assertModifiable();
+    const { request, resubmitted } = await this.deps.unitOfWork.run(
+      async ({ vacationRequests }) => {
+        const request = await vacationRequests.findById(command.requestId, { lock: true });
+        if (!request) throw VacationRequestErrors.notFound();
+        if (!request.isOwnedBy(command.actorId)) throw VacationRequestErrors.notOwner();
+        request.assertModifiable();
 
-      const period = VacationPeriod.create(command.startDate, command.endDate, this.deps.clock.today());
-      await assertNoOverlap(vacationRequests, request.userId, period, request.id);
+        const period = VacationPeriod.create(
+          command.startDate,
+          command.endDate,
+          this.deps.clock.today(),
+        );
+        await assertNoOverlap(vacationRequests, request.userId, period, request.id);
 
-      const { resubmitted } = request.reschedule(period, command.reason);
-      return { request: await vacationRequests.save(request), resubmitted };
-    });
+        const { resubmitted } = request.reschedule(period, command.reason);
+        return { request: await vacationRequests.save(request), resubmitted };
+      },
+    );
 
     await this.deps.events.publish(VacationRequestUpdatedEvent.from(request, resubmitted));
     return { id: request.id, resubmitted };

@@ -7,7 +7,9 @@
  * generator works identically on every platform.
  */
 const path = require('node:path');
-const { generateHandlerRegistry } = require('commoneventframework/dist/script/generateHandlerRegistry');
+const {
+  generateHandlerRegistry,
+} = require('commoneventframework/dist/script/generateHandlerRegistry');
 
 generateHandlerRegistry({
   cwd: path.resolve(__dirname, '..'),

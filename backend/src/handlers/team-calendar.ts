@@ -11,6 +11,12 @@ export const parseGetTeamCalendar = defineInputParser({
   query: z.object({ from: isoDate, to: isoDate }),
 });
 
-export const getTeamCalendar = defineRouteHandler(parseGetTeamCalendar, async ({ query }, { app }) =>
-  ok(await app.queryBus.execute(new GetTeamCalendarQuery(query.from as IsoDate, query.to as IsoDate))),
+export const getTeamCalendar = defineRouteHandler(
+  parseGetTeamCalendar,
+  async ({ query }, { app }) =>
+    ok(
+      await app.queryBus.execute(
+        new GetTeamCalendarQuery(query.from as IsoDate, query.to as IsoDate),
+      ),
+    ),
 );

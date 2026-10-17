@@ -26,9 +26,14 @@ export class CreateVacationRequestHandler implements CommandHandler<CreateVacati
     const request = await this.deps.unitOfWork.run(async ({ users, vacationRequests }) => {
       const requester = await users.findById(command.requesterId);
       if (!requester) throw new UnauthorizedError('Your account no longer exists');
-      if (!requester.hasRole(UserRole.REQUESTER)) throw VacationRequestErrors.onlyRequestersCanSubmit();
+      if (!requester.hasRole(UserRole.REQUESTER))
+        throw VacationRequestErrors.onlyRequestersCanSubmit();
 
-      const period = VacationPeriod.create(command.startDate, command.endDate, this.deps.clock.today());
+      const period = VacationPeriod.create(
+        command.startDate,
+        command.endDate,
+        this.deps.clock.today(),
+      );
       await assertNoOverlap(vacationRequests, requester.id, period);
 
       return vacationRequests.save(

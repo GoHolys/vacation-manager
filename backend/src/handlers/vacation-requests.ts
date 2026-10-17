@@ -10,7 +10,13 @@ import { UpdateVacationRequestCommand } from '../modules/vacation-requests/appli
 import { GetVacationRequestQuery } from '../modules/vacation-requests/application/queries/get-vacation-request.query';
 import { GetVacationRequestStatsQuery } from '../modules/vacation-requests/application/queries/get-vacation-request-stats.query';
 import { ListVacationRequestsQuery } from '../modules/vacation-requests/application/queries/list-vacation-requests.query';
-import { decisionBody, idParams, paginationQuery, statusFilter, vacationRequestBody } from './schemas';
+import {
+  decisionBody,
+  idParams,
+  paginationQuery,
+  statusFilter,
+  vacationRequestBody,
+} from './schemas';
 
 /**
  * Vacation request routes. Each handler is a thin adapter: it maps validated HTTP input to a
@@ -37,7 +43,10 @@ export const listMyVacationRequests = defineRouteHandler(
     const { page, pageSize, sort, order, status } = query;
     return ok(
       await ctx.app.queryBus.execute(
-        new ListVacationRequestsQuery({ userId: ctx.user().id, status, sort, order }, { page, pageSize }),
+        new ListVacationRequestsQuery(
+          { userId: ctx.user().id, status, sort, order },
+          { page, pageSize },
+        ),
       ),
     );
   },
@@ -97,8 +106,9 @@ export const cancelVacationRequest = defineRouteHandler(
 // ─── Shared (requester: own requests only; validator: any) ────────────────────
 
 /** GET /api/v1/vacation-requests/:id */
-export const getVacationRequest = defineRouteHandler(parseVacationRequestId, async ({ params }, ctx) =>
-  ok(await fetchRequest(ctx, params.id)),
+export const getVacationRequest = defineRouteHandler(
+  parseVacationRequestId,
+  async ({ params }, ctx) => ok(await fetchRequest(ctx, params.id)),
 );
 
 // ─── Validator ────────────────────────────────────────────────────────────────

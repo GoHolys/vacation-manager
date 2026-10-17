@@ -23,16 +23,31 @@ import {
   setLambdaContext,
   startDevServer,
 } from 'commoneventframework';
-import type { LambdaEvent } from 'commoneventframework/dist/types/commonEvent';
+import type { CommonEvent, LambdaEvent } from 'commoneventframework/dist/types/commonEvent';
 import { getApplication } from './bootstrap/application';
 import { createHttpKernel } from './http/http-kernel';
 import { RouteSecurity } from './http/route-security';
 
+// root.yaml sits next to this file both in src/ (tsx) and dist/ (compiled build).
+const ROOT_YAML = path.join(__dirname, 'root.yaml');
+
 const kernel = createHttpKernel({
-  // root.yaml sits next to this file both in src/ (tsx) and dist/ (compiled build).
-  routeSecurity: RouteSecurity.fromOpenApiFile(path.join(__dirname, 'root.yaml')),
+  routeSecurity: RouteSecurity.fromOpenApiFile(ROOT_YAML),
   getApplication,
 });
+
+/**
+ * CEF locates root.yaml relative to the process entry script by default. Passing the path on the
+ * first call makes routing independent of the launcher (tsx, node, Lambda, test runners);
+ * CEF caches the parsed routes for subsequent calls.
+ */
+let routesLoaded = false;
+function toCommonEvent(event: LambdaEvent): CommonEvent {
+  if (routesLoaded) return buildCommonEvent(event);
+  const commonEvent = buildCommonEvent(event, ROOT_YAML);
+  routesLoaded = true;
+  return commonEvent;
+}
 
 export const handler = async (
   event: LambdaEvent,
@@ -40,7 +55,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   await envReady;
   await setLambdaContext(context);
-  return kernel(buildCommonEvent(event));
+  return kernel(toCommonEvent(event));
 };
 
 async function startLocalServer(): Promise<void> {

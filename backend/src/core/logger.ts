@@ -29,7 +29,11 @@ export function createLogger({ level, pretty }: LoggerOptions): Logger {
       ? {
           transport: {
             target: 'pino-pretty',
-            options: { colorize: true, translateTime: 'HH:MM:ss.l', ignore: 'pid,hostname,service' },
+            options: {
+              colorize: true,
+              translateTime: 'HH:MM:ss.l',
+              ignore: 'pid,hostname,service',
+            },
           },
         }
       : {}),

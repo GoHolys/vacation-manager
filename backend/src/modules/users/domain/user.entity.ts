@@ -1,5 +1,5 @@
 import { Check, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
-import { USER_ROLES, UserRole } from './user-role';
+import { USER_ROLES, type UserRole } from './user-role';
 
 @Entity({ name: 'users' })
 @Unique('uq_users_email', ['email'])
