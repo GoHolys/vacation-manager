@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/atkinson-hyperlegible-next';
+@import '@fontsource-variable/bricolage-grotesque';
+
+/*
+ * Design tokens.
+ * Cool "paper" ground, deep ink text, a lagoon accent for actions and a sun yellow reserved for
+ * "today". Status colours always ship with an icon/shape so meaning never depends on colour alone.
+ */
+@theme {
+  --font-sans: 'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-ink: #1b2433;
+  --color-ink-soft: #4a5568;
+  --color-ink-faint: #64748b;
+  --color-line: #dde3ea;
+  --color-line-strong: #c5cfda;
+
+  --color-lagoon-50: #e8f5f4;
+  --color-lagoon-100: #cbe9e7;
+  --color-lagoon-200: #9ed5d2;
+  --color-lagoon-500: #16858a;
+  --color-lagoon-600: #0e6f73;
+  --color-lagoon-700: #0b5a5e;
+  --color-lagoon-800: #0a4649;
+
+  --color-sun: #f2b33d;
+  --color-sun-soft: #fdf1d6;
+
+  --color-pending: #8a5300;
+  --color-pending-bg: #fff3d9;
+  --color-pending-line: #f1cf86;
+  --color-approved: #16643e;
+  --color-approved-bg: #ddf3e6;
+  --color-approved-line: #a3d8b9;
+  --color-rejected: #b42318;
+  --color-rejected-bg: #fde8e5;
+  --color-rejected-line: #f3b7ae;
+
+  --radius-panel: 0.875rem;
+  --shadow-panel: 0 1px 2px rgb(27 36 51 / 0.05), 0 1px 1px rgb(27 36 51 / 0.03);
+  --shadow-pop: 0 12px 32px -8px rgb(27 36 51 / 0.25), 0 2px 6px rgb(27 36 51 / 0.08);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-ink;
+    font-optical-sizing: auto;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-lagoon-500;
+  }
+  ::selection {
+    @apply bg-lagoon-100;
+  }
+}
+
+@layer components {
+  /* Shared look for native form controls (inputs stay native for accessibility). */
+  .control {
+    @apply block w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-ink shadow-xs transition-colors placeholder:text-ink-faint;
+    @apply hover:border-ink-faint focus:border-lagoon-500 focus:ring-3 focus:ring-lagoon-100 focus:outline-none;
+    @apply disabled:cursor-not-allowed disabled:bg-paper disabled:text-ink-faint;
+  }
+  .control[aria-invalid='true'] {
+    @apply border-rejected focus:ring-rejected-bg;
+  }
+  .panel {
+    @apply rounded-(--radius-panel) border border-line bg-surface shadow-(--shadow-panel);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
