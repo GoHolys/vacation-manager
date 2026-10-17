@@ -77,7 +77,7 @@ export class TypeOrmVacationRequestReadModel implements VacationRequestReadModel
         .getRepository(VacationRequest)
         .createQueryBuilder('request')
         .where('request.status IN (:...statuses)', { statuses: BLOCKING_STATUSES })
-        // Same expression as the exclusion constraint, so its GiST index can serve this query.
+        // Same range expression as the exclusion constraint (GiST-indexable).
         .andWhere(
           `daterange(request.startDate, request.endDate, '[]') && daterange(CAST(:from AS date), CAST(:to AS date), '[]')`,
           { from, to },
